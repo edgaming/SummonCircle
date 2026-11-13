@@ -1,33 +1,59 @@
-# Push a tag like v0.6.0 and this builds SummonCircle-v0.6.0.zip and
-# publishes it as a GitHub release. WowUp picks up new releases from there.
+# Releasing: change the number in VERSION and push to main.
+# This workflow runs the tests, creates the tag (e.g. v0.6.0), builds
+# SummonCircle-v0.6.0.zip with the BigWigs packager, and publishes it as a
+# GitHub release. WowUp picks up new releases from there.
 name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+    paths: [VERSION]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install lupa
-      - run: python tests/run.py
-
   release:
-    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: BigWigsMods/packager@v2
+
+      - name: Read version
+        id: v
+        run: |
+          tag="v$(tr -d '[:space:]' < VERSION)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$tag already released; nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.v.outputs.exists == 'false'
+        with:
+          python-version: "3.12"
+
+      - name: Test
+        if: steps.v.outputs.exists == 'false'
+        run: |
+          pip install lupa
+          python tests/run.py
+
+      - name: Tag
+        if: steps.v.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.v.outputs.tag }}" -m "Summon Circle ${{ steps.v.outputs.tag }}"
+          git push origin "${{ steps.v.outputs.tag }}"
+
+      - name: Package and publish
+        if: steps.v.outputs.exists == 'false'
+        uses: BigWigsMods/packager@v2
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

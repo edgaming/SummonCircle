@@ -46,5 +46,5 @@ The queue, earnings and blacklist are only sent privately to the summoners the l
 
 ## Development
 - **Tests:** `pip install lupa`, then `python tests/run.py`. This loads the addon in a fake WoW environment (`tests/wowmock.lua`) and runs every `tests/t_*.lua` scenario. The tests also run on GitHub for every push.
-- **Releasing:** tag and push, e.g. `git tag v0.6.0 && git push origin v0.6.0`. GitHub Actions runs the tests, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.
+- **Releasing:** change the number in `VERSION` (e.g. `0.6.1`) and push to `main`. GitHub Actions runs the tests, creates the tag, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.
 - The version shown in game comes from the tag. The `@project-version@` placeholder in the `.toc` is filled in when the release is packaged.
