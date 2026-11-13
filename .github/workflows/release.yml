@@ -7,7 +7,7 @@ name: Release
 on:
   push:
     branches: [main]
-    paths: [VERSION]
+    paths: [VERSION, .github/workflows/release.yml]
   workflow_dispatch:
 
 permissions:
@@ -23,10 +23,13 @@ jobs:
 
       - name: Read version
         id: v
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="v$(tr -d '[:space:]' < VERSION)"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+          # Released = a GitHub release exists (a bare tag isn't enough).
+          if gh release view "$tag" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "$tag already released; nothing to do."
           else
@@ -49,11 +52,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.v.outputs.tag }}" -m "Summon Circle ${{ steps.v.outputs.tag }}"
-          git push origin "${{ steps.v.outputs.tag }}"
+          tag="${{ steps.v.outputs.tag }}"
+          if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            git tag -a "$tag" -m "Summon Circle $tag"
+            git push origin "$tag"
+          fi
 
+      # Run the BigWigs packager script directly. Its GitHub Action skips
+      # branch-push runs whose commit is tagged (it expects a separate
+      # tag-push run to package), but here this run IS the release run.
       - name: Package and publish
         if: steps.v.outputs.exists == 'false'
-        uses: BigWigsMods/packager@v2
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout -q "${{ steps.v.outputs.tag }}"
+          curl -fsSL https://raw.githubusercontent.com/BigWigsMods/packager/v2/release.sh -o "$RUNNER_TEMP/release.sh"
+          GITHUB_EVENT_NAME=workflow_dispatch bash "$RUNNER_TEMP/release.sh"
