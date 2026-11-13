@@ -1,0 +1,12 @@
+GROUP = { { name = "Ash Lock", leader = true }, { name = "Quest Buddy" } }
+LoadAddon(ADDON_DIR)
+FireEvent("ADDON_LOADED", "SummonCircle")
+FireEvent("PLAYER_LOGIN")
+FireEvent("GROUP_ROSTER_UPDATE")
+RunTimers(3)
+SlashCmdList.SUMMONCIRCLE("")
+print("shown after 1st /sc:", tostring(SummonCircleFrame._shown))
+SlashCmdList.SUMMONCIRCLE("")
+print("shown after 2nd /sc:", tostring(SummonCircleFrame._shown))
+RunTimers(2)
+SlashCmdList.SUMMONCIRCLE("debug")

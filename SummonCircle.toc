@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: Summon Circle
+## Notes: Run a warlock summoning circle: shared queue, rotation, payments, blacklist.
+## Author: SummonCircle
+## Version: @project-version@
+## SavedVariables: SummonCircleDB
+
+Core.lua
+Comm.lua
+Circle.lua
+UI.lua

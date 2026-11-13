@@ -1,0 +1,6 @@
+package-as: SummonCircle
+
+ignore:
+  - tests
+  - .github
+  - .gitignore
