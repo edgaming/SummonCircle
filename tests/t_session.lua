@@ -15,37 +15,37 @@ RunTimers(3)
 FireEvent("CHAT_MSG_WHISPER", "+", "Random Person")
 FireEvent("CHAT_MSG_WHISPER", "inv", "Other Person")
 RunTimers(3)
-check("questing: session off after login", not ns:IsActive())
+check("questing: session off after login", not ns.Session.IsActive())
 check("questing: party NOT converted to raid", RAID == false)
 check("questing: nobody auto-invited", invites() == 0)
 check("questing: no reply whispers", #SENT == 0)
-check("questing: closed, no action button", ns:NextAction().label == nil)
+check("questing: closed, no action button", ns.Advisor.NextAction().label == nil)
 
 -- 2) Leader ticks a summoner while off: still no raid.
 table.insert(GROUP, { name = "Bram Lock" })
 FireEvent("GROUP_ROSTER_UPDATE"); hello("Bram Lock"); RunTimers(2)
-ns:SetSummoner("Bram Lock", true); RunTimers(3)
+ns.Session.SetSummoner("Bram Lock", true); RunTimers(3)
 check("ticking a summoner while off does not convert", RAID == false)
 
 -- 3) Start the session: converts (2 summoners need assist), intake works.
-ns:StartSession(); RunTimers(2)
-check("start: session on", ns:IsActive())
+ns.Session.Start(); RunTimers(2)
+check("start: session on", ns.Session.IsActive())
 check("start: converted to raid", RAID == true)
-check("start: banner asks to give Bram assist", (ns:NextAction().label or ""):find("assist") ~= nil)
+check("start: banner asks to give Bram assist", (ns.Advisor.NextAction().label or ""):find("assist") ~= nil)
 FireEvent("CHAT_MSG_WHISPER", "inv", "Bob Smith"); RunTimers(2)
 check("start: customer invited", invites() == 1)
 
 -- 4) Stop: intake stops.
-ns:StopSession(); RunTimers(1)
+ns.Session.Stop(); RunTimers(1)
 FireEvent("CHAT_MSG_WHISPER", "inv", "Late Customer"); RunTimers(1)
-check("stop: session off", not ns:IsActive())
+check("stop: session off", not ns.Session.IsActive())
 check("stop: no more invites", invites() == 1)
 
 -- 5) Solo-led session with one customer stays a party.
 RAID = false
 GROUP = { { name = "Ash Lock", leader = true }, { name = "Bob Smith" } }
 ns.S.summoners = { "Ash Lock" }
-FireEvent("GROUP_ROSTER_UPDATE"); ns:StartSession(); RunTimers(3)
+FireEvent("GROUP_ROSTER_UPDATE"); ns.Session.Start(); RunTimers(3)
 check("one summoner + 1 customer stays a party", RAID == false)
 table.insert(GROUP, { name = "C Two" }); table.insert(GROUP, { name = "C Three" })
 FireEvent("GROUP_ROSTER_UPDATE"); RunTimers(2)
@@ -54,10 +54,10 @@ check("party of 4 during a session converts", RAID == true)
 -- 6) Leaving the group ends the session.
 GROUP = {}; RAID = false
 FireEvent("GROUP_ROSTER_UPDATE"); RunTimers(1)
-check("left group: session off", not ns:IsActive())
+check("left group: session off", not ns.Session.IsActive())
 
 -- 7) Joining someone else's summoning group starts off until their leader switches us on.
 ns.S.active = true
 GROUP = { { name = "Other Leader", leader = true }, { name = "Ash Lock" } }
 FireEvent("GROUP_ROSTER_UPDATE"); RunTimers(1)
-check("joined as non-leader: off", not ns:IsActive())
+check("joined as non-leader: off", not ns.Session.IsActive())

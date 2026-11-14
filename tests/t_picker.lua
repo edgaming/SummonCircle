@@ -16,7 +16,7 @@ ns.S.queue["Bob Smith"] = { name = "Bob Smith", added = 1, status = "GROUP" }
 for _, mode in ipairs({ "party", "raid" }) do
   RAID = (mode == "raid")
   FireEvent("GROUP_ROSTER_UPDATE")
-  local c = ns:SummonerCandidates()
+  local c = ns.Session.Candidates()
   check(mode .. ": I'm listed first", c[1] == "Ash Lock")
   check(mode .. ": warlock friend listed", has(c, "Bram Lock"))
   check(mode .. ": priest hidden", not has(c, "Holy Priest"))

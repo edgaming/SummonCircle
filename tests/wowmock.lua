@@ -55,27 +55,42 @@ function FireEvent(e, ...)
   end
 end
 
+-- Timers: RunTimers(n) runs every ticker n times; C_Timer.After callbacks
+-- run once, on the next RunTimers.
+local afters = {}
 C_Timer = {
   NewTicker = function(sec, fn) table.insert(timers, fn); return {} end,
-  After = function(sec, fn) table.insert(timers, fn) end,
+  After = function(sec, fn) table.insert(afters, fn) end,
 }
+local function call(fn)
+  local ok, err = pcall(fn)
+  if not ok then table.insert(ERRORS, "timer: " .. tostring(err)) end
+end
 function RunTimers(n)
   for _ = 1, (n or 1) do
     local list = {}
     for i, fn in ipairs(timers) do list[i] = fn end
-    for _, fn in ipairs(list) do
-      local ok, err = pcall(fn)
-      if not ok then table.insert(ERRORS, "timer: " .. tostring(err)) end
-    end
+    for _, fn in ipairs(list) do call(fn) end
+    local once = afters
+    afters = {}
+    for _, fn in ipairs(once) do call(fn) end
   end
 end
+
+-- Clock: Advance(sec) moves both game clocks forward.
+CLOCK_OFFSET = 0
+function Advance(sec) CLOCK_OFFSET = CLOCK_OFFSET + sec end
 
 -- Group model
 ME_NAME = "Ash Lock"
 GROUP = {}         -- list of { name=, leader=bool, assist=bool }
 RAID = false
+TRADE_PARTNER = nil -- who's on the other side of the trade window
+TRADE_MONEY = 0
+ZONE = "Undercity"  -- where I am
 local function unitName(unit)
   if unit == "player" then return ME_NAME end
+  if unit == "NPC" then return TRADE_PARTNER end
   local i = tonumber((unit or ""):match("^party(%d)$"))
   if i then
     local others = {}
@@ -109,10 +124,10 @@ function UnitIsAFK() return false end
 function UnitPower() return 0 end
 function GetNormalizedRealmName() return "CAMWOWUS2Realm8PvP" end
 function Ambiguate(name, mode) return (name:gsub("%-[^%-]+$", "")) end
-function GetRealZoneText() return "Undercity" end
-function GetServerTime() return os.time() end
+function GetRealZoneText() return ZONE end
+function GetServerTime() return os.time() + CLOCK_OFFSET end
 local t0 = os.clock()
-function GetTime() return 1000 + (os.clock() - t0) end
+function GetTime() return 1000 + (os.clock() - t0) + CLOCK_OFFSET end
 COMBAT = false
 function InCombatLockdown() return COMBAT end
 function GetCVarBool() return true end
@@ -128,7 +143,7 @@ function PromoteToAssistant(u) local m = member(u); if m then m.assist = true en
 function UninviteUnit() end
 function ConvertToRaid() RAID = true end
 function SendChatMessage(text, kind, _, target) SENT[#SENT+1] = { kind = kind, text = text, target = target } end
-function GetTargetTradeMoney() return 0 end
+function GetTargetTradeMoney() return TRADE_MONEY end
 ChatTypeInfo = { RAID_WARNING = {} }
 SOUNDKIT = { RAID_WARNING = 1 }
 LE_PARTY_CATEGORY_INSTANCE = 2
@@ -140,10 +155,27 @@ C_AddOns = { GetAddOnMetadata = function() return "test" end }
 C_Item = { GetItemCount = function() return 22 end }
 C_Spell = { GetSpellName = function(id) return id == 698 and "Ritual of Summoning" or "Other" end }
 C_PartyInfo = { InviteUnit = function(n) SENT[#SENT+1] = { kind = "INVITE", target = n } end, ConvertToRaid = function() RAID = true end }
-local reg, regN = {}, 0
+-- "CBOR" here is a Lua literal, so messages survive the trip between
+-- separate players (separate Lua runtimes) in the multi-player tests.
+local function ser(v)
+  local t = type(v)
+  if t == "string" then return ("%q"):format(v) end
+  if t == "number" or t == "boolean" or t == "nil" then return tostring(v) end
+  if t == "table" then
+    local out = {}
+    for k, x in pairs(v) do out[#out + 1] = "[" .. ser(k) .. "]=" .. ser(x) end
+    return "{" .. table.concat(out, ",") .. "}"
+  end
+  error("can't serialize " .. t)
+end
 C_EncodingUtil = {
-  SerializeCBOR = function(t) regN = regN + 1; reg[tostring(regN)] = t; return tostring(regN) end,
-  DeserializeCBOR = function(s) return reg[s] end,
+  SerializeCBOR = ser,
+  DeserializeCBOR = function(s)
+    local f = loadstring("return " .. s)
+    if not f then error("bad CBOR") end
+    setfenv(f, {})
+    return f()
+  end,
   CompressString = function(s) return s end, DecompressString = function(s) return s end,
   EncodeBase64 = function(s) return s end, DecodeBase64 = function(s) return s end,
 }
@@ -158,4 +190,18 @@ function UnitClass(u)
   local m = member(u)
   local class = m and m.class or "WARLOCK"
   return class, class
+end
+
+-- Assertions shared by every test.
+function check(label, cond) print((cond and "PASS " or "FAIL ") .. label) end
+function eq(label, got, want)
+  if got == want then print("PASS " .. label)
+  else print(("FAIL %s: got %s, want %s"):format(label, tostring(got), tostring(want))) end
+end
+
+-- Load the addon the way the game does at login.
+function Boot()
+  LoadAddon(ADDON_DIR)
+  FireEvent("ADDON_LOADED", "SummonCircle")
+  FireEvent("PLAYER_LOGIN")
 end

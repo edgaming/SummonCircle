@@ -50,7 +50,31 @@ Read the purple box and press the big button under it.
 - Customers inside a dungeon or battleground aren't flagged yet. A summon to them just times out and they go back into the queue.
 
 ## Development
-- **Tests:** `pip install lupa`, then `python tests/run.py`. This loads the addon in a fake WoW environment (`tests/wowmock.lua`) and runs every `tests/t_*.lua` scenario. The tests also run on GitHub for every push.
-- **Releasing:** change the number in `VERSION` (e.g. `0.6.3`) and push to `main`. GitHub Actions runs the tests, creates the tag, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.
+### Layout
+The `.toc` loads the files in this order. Each layer only uses the ones above it.
+
+| Folder | What's there |
+|---|---|
+| `Core/` | Namespace, settings, event dispatch and the internal event bus (`Core.lua`); pure helpers like money and names (`Util.lua`); the thin layer over WoW's API (`Game.lua`); cities and their nicknames (`Locations.lua`). |
+| `Net/` | The wire format (`Protocol.lua`); sending and receiving addon messages (`Transport.lua`); who's in the group and who runs the addon (`Roster.lua`). |
+| `Domain/` | The circle itself: shared state and sync (`Sync.lua`), open/close and summoners (`Session.lua`), turn order (`Rotation.lua`), earnings (`Ledger.lua`), `Blacklist.lua`, customers (`Queue.lua`), `Advertise.lua`, and "what do I do now" (`Advisor.lua`). |
+| `UI/` | Widget helpers, the main window, and one file per side panel. |
+| `Commands.lua` | Slash commands. |
+
+A few rules keep it modular:
+- Modules are tables on the namespace (`ns.Queue`, `ns.Session`, ...) and are called with a dot: `ns.Session.Start()`.
+- Features never call WoW's messaging API directly. They use `Transport.Send` and `Transport.Handle("TYPE", fn)`. Message types a client doesn't know are ignored, so new messages don't break older versions.
+- Changes to the shared state are ops, registered with `Sync.RegisterOp` and applied with `Sync.Do`.
+- Domain code never touches the UI. It calls `ns.Update()` and the window refreshes itself. Modules announce events (`GROUP_JOINED`, `PEER_SEEN`, `SUMMONERS_CHANGED`, ...) with `ns.Emit`, and others subscribe with `ns.Listen`.
+
+### Tests
+`pip install lupa`, then `python tests/run.py`. The tests also run on GitHub for every push.
+- `tests/t_*.lua` load the addon in a fake WoW environment (`tests/wowmock.lua`) as one player. The unit tests (`t_util`, `t_protocol`, `t_transport`, `t_locations`) live here too.
+- `tests/t_*.py` are multi-player scenarios. `tests/harness.py` runs a separate copy of the addon for each player in one group and routes addon messages between them the way the game does (group messages to everyone else, addon whispers to one player, realm suffix on sender names). `t_circle.py` runs a full circle from picking summoners to payment. `t_resilience.py` covers privacy from customers with the addon, blacklist sharing, timeouts, customers who leave without paying, and the leader leaving mid-session.
+
+### Releasing
+- Change the number in `VERSION` (e.g. `0.7.0`) and push to `main`. GitHub Actions runs the tests, creates the tag, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.
 - The version shown in game comes from the tag. The `@project-version@` placeholder in the `.toc` is filled in when the release is packaged.
-- **Art:** `art/icon.svg` is the icon source. `Media/icon.tga` (64×64) is the in-game icon, set via `## IconTexture` in the `.toc`. `art/social-preview.png` is the 1280×640 banner used for the GitHub social preview, which WowUp shows as the addon's image.
+
+### Art
+`art/icon.svg` is the icon source. `Media/icon.tga` (64×64) is the in-game icon, set via `## IconTexture` in the `.toc`. `art/social-preview.png` is the 1280×640 banner used for the GitHub social preview, which WowUp shows as the addon's image.
