@@ -50,11 +50,21 @@ local function buildChannels()
   p.noChan = Wd.Text(p, "GameFontDisable")
   p.noChan:SetPoint("TOPLEFT", 16, -106)
   p.noChan:SetText("You haven't joined any chat channels.")
+
+  -- The same channels are read for summon requests (Requests list).
+  local read = Wd.Checkbox(p)
+  read:SetPoint("TOPLEFT", 12, -102 - CHAN_ROWS * 22 - 2)
+  read.label:SetText("Read these channels for summon requests")
+  read:SetScript("OnClick", function(self)
+    ns.db.readRequests = self:GetChecked() and true or false
+    ns.Update()
+  end)
+  p.read = read
 end
 
 -- A multi-line text block (wraps instead of scrolling sideways), then the preview.
 local function buildMessage()
-  local y = -102 - CHAN_ROWS * 22 - 10
+  local y = -102 - CHAN_ROWS * 22 - 34
   Wd.Section(p, "Message", y)
   local holder = CreateFrame("Frame", nil, p, "BackdropTemplate")
   holder:SetPoint("TOPLEFT", 14, y - 16)
@@ -114,6 +124,7 @@ function panel.Refresh()
       cb:Hide()
     end
   end
+  p.read:SetChecked(ns.db.readRequests ~= false)
   if not p.box:HasFocus() then p.box:SetText(ns.db.adText) end
   p.preview:SetText(Wd.c(Wd.YELLOW, ns.Advertise.Text()))
 end

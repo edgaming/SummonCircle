@@ -1,0 +1,52 @@
+# Chat lines and whether they're a summon request, with the circle open in
+# the city on the left. Format:   city | yes [offer in copper] | line
+#                                 city | no | line
+# Every false positive or miss found in game becomes a new line here.
+
+# From the design doc
+undercity | yes      | WTB UC summon
+undercity | yes 2000 | anyone summon to undercity? 20s
+undercity | yes      | LF lock sum UC
+undercity | yes      | WTB port to UC
+undercity | no       | WTB summon to Org
+undercity | no       | WTS summons to UC 30s
+undercity | no       | WTB summon
+undercity | no       | LFM BRD need tank
+undercity | no       | what if summoning stone works
+
+# Spelling and punctuation
+undercity | yes      | wtb summ uc!!
+undercity | yes      | need a summo to UC plz
+undercity | yes      | summon to under city?
+undercity | yes      | WTB UNDERCITY SUMMONS
+undercity | yes      | lf warlock to summon me to uc
+undercity | yes      | anyone have a portal to UC
+undercity | yes 15000| WTB summon UC 1g50s
+undercity | yes 15000| WTB summon UC 1g 50s
+undercity | yes 10000| need sum uc paying 1g
+undercity | yes      | wtb summon uc 30
+
+# Selling, guilds, other noise
+undercity | no       | Selling summons to UC, whisper me
+undercity | no       | LFW summoner gig in UC
+undercity | no       | <Lock Lords> recruiting all classes, UC based
+undercity | no       | anyone in uc wanna duel
+undercity | no       | the sum of all fears
+undercity | no       | ucla grad here lol summon
+undercity | no       | going to do some summon quests in Durotar
+
+# Other cities
+orgrimmar | yes      | WTB org summon
+orgrimmar | yes      | LF summon to orgrimmar
+orgrimmar | yes      | summon og pls
+thunderbluff | yes   | WTB thunder bluff summon
+thunderbluff | no    | WTB summon to UC
+ironforge | yes      | LF summon IF
+ironforge | yes      | if summon anyone?
+ironforge | yes      | WTB summon to ironforge
+ironforge | no       | what if i summon a demon
+ironforge | no       | if anyone wants a summon to SW
+stormwind | yes      | lf sw summon
+darnassus | yes      | WTB darn summon 20s
+undercity | no       | Lock Guild is recruiting! UC raid nights
+undercity | no       | recruit warlocks for UC summons

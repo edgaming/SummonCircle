@@ -30,6 +30,8 @@ local DEFAULTS = {
   channels = false,                      -- [channel name] = true; false = auto (Trade)
   adText = "WTS summons to {city} - {price} - whisper 'inv' for instant invite{queue}",
   adCooldown = 60,                       -- seconds between ads
+  readRequests = true,                   -- read the ad channels for summon requests
+  requestSound = false,                  -- quiet sound when a new request arrives
   thanks = "Thanks",
   summonTimeout = 120,                   -- seconds before an unaccepted summon resets
   unpaidTimeout = 180,                   -- seconds after arrival before the row turns red

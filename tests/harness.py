@@ -82,6 +82,16 @@ class Player:
         self.fire("CHAT_MSG_WHISPER", text, sender + REALM)
         self.world.sync()
 
+    def channel(self, text, sender, index=2):
+        """A line in a chat channel (2 = Trade, 1 = General) reaches this player."""
+        names = {1: "General - Undercity", 2: "Trade - City"}
+        self.fire("CHAT_MSG_CHANNEL", text, sender + REALM, "", f"{index}. {names[index]}",
+                  "", "", 0, index, names[index])
+
+    def leads(self):
+        """{ name: lead } of this player's open requests (not whispered by someone else)."""
+        return {k: v for k, v in self.ns.Leads.list.items() if v.claimedBy is None}
+
     def chat(self):
         return list(self.g.CHAT.values())
 

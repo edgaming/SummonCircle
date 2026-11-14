@@ -47,6 +47,16 @@ function Widgets.Checkbox(parent)
   return cb
 end
 
+-- A flat text button used as one half of a switch ("QUEUE (4) | REQUESTS (2)").
+function Widgets.Tab(parent, onClick)
+  local b = CreateFrame("Button", nil, parent)
+  b:SetSize(110, 16)
+  b:SetNormalFontObject("GameFontNormalSmall")
+  b:SetHighlightFontObject("GameFontHighlightSmall")
+  b:SetScript("OnClick", onClick)
+  return b
+end
+
 -- Small gold heading: "SUMMONERS"
 function Widgets.Section(parent, text, y, x)
   local s = Widgets.Text(parent, "GameFontNormalSmall")

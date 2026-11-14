@@ -5,7 +5,7 @@
 --   status bar: OPEN / CLOSED + the leader's on/off toggle
 --   banner: what to do now + one big button
 --   summoners (leader: gear opens the picker)
---   queue
+--   queue | requests (a switch; one list at a time, the queue by default)
 --   footer: earnings, Advertise (leader only; gear opens ad settings)
 --
 -- Side panels (summoner picker, ad settings) live in their own files and
@@ -32,7 +32,15 @@ local H = -Y_ROWS + ROWS * ROW_H + 58
 
 UI.W, UI.H = W, H
 
-local f, rows, big, adBtn, adGear, sumGear
+local f, rows, reqRows, big, adBtn, adGear, sumGear
+
+-- Which list is showing: "queue" or "requests". Never changes by itself.
+UI.view = "queue"
+
+function UI.ShowView(view)
+  UI.view = view
+  UI.Refresh()
+end
 
 ---------------------------------------------------------------------------
 -- Side panels: { frame, Build(), Refresh(), Allowed() }
@@ -69,6 +77,22 @@ local function buildRow(i)
   r.zone = Wd.Text(r); r.zone:SetPoint("LEFT", 130, 0); r.zone:SetWidth(120)
   r.status = Wd.Text(r); r.status:SetPoint("LEFT", 252, 0); r.status:SetWidth(120)
   r.btn = Wd.Button(r, "", 58, 18); r.btn:SetPoint("RIGHT", 0, 0)
+  return r
+end
+
+-- A summon request from chat: who, "what they said", how long ago, Whisper, ×.
+local function buildRequestRow(i)
+  local r = CreateFrame("Frame", nil, f)
+  r:SetSize(W - 28, ROW_H)
+  r:SetPoint("TOPLEFT", f, "TOPLEFT", 14, Y_ROWS - (i - 1) * ROW_H)
+  r.name = Wd.Text(r); r.name:SetPoint("LEFT", 0, 0); r.name:SetWidth(108)
+  r.text = Wd.Text(r); r.text:SetPoint("LEFT", 110, 0); r.text:SetWidth(196)
+  r.text:SetWordWrap(false)
+  r.age = Wd.Text(r, nil, "RIGHT"); r.age:SetPoint("LEFT", 306, 0); r.age:SetWidth(36)
+  r.close = Wd.Button(r, "×", 22, 18); r.close:SetPoint("RIGHT", 0, 0)
+  r.whisper = Wd.Button(r, "Whisper", 62, 18); r.whisper:SetPoint("RIGHT", r.close, "LEFT", -2, 0)
+  r.whisper:SetScript("OnClick", function() ns.Leads.Whisper(r.from) end)
+  r.close:SetScript("OnClick", function() ns.Leads.Dismiss(r.from) end)
   return r
 end
 
@@ -180,10 +204,14 @@ function UI.Build()
     f.summoners[i] = line
   end
 
-  -- Queue
-  f.queueHdr = Wd.Section(f, "Queue", Y_QUEUE)
-  rows = {}
+  -- Queue | Requests
+  f.queueTab = Wd.Tab(f, function() UI.ShowView("queue") end)
+  f.queueTab:SetPoint("TOPLEFT", 12, Y_QUEUE + 2)
+  f.reqTab = Wd.Tab(f, function() UI.ShowView("requests") end)
+  f.reqTab:SetPoint("LEFT", f.queueTab, "RIGHT", 6, 0)
+  rows, reqRows = {}, {}
   for i = 1, ROWS do rows[i] = buildRow(i) end
+  for i = 1, ROWS do reqRows[i] = buildRequestRow(i) end
   f.empty = Wd.Text(f, "GameFontDisable"); f.empty:SetPoint("TOPLEFT", 22, Y_ROWS - 2)
   f.more = Wd.Text(f, "GameFontDisableSmall"); f.more:SetPoint("TOPLEFT", 22, Y_ROWS - ROWS * ROW_H - 2)
 
@@ -325,14 +353,58 @@ local function refreshSummoners(list, me)
   end
 end
 
-local function refreshQueue(now, me)
-  local queue = ns.Queue.Sorted()
-  f.queueHdr:SetText(("QUEUE (%d)"):format(#queue))
+local function ago(sec)
+  sec = math.max(0, sec)
+  if sec < 60 then return sec .. "s" end
+  return ns.Clock(sec)
+end
+
+local function refreshTabs(nQueue, nReq)
+  local q, r = UI.view == "queue", UI.view == "requests"
+  f.queueTab:SetText(c(q and "ffffff" or GREY, ("QUEUE (%d)"):format(nQueue)))
+  -- A new request only lights up the label; it never switches the view.
+  local reqCol = r and "ffffff" or (ns.Leads.HasUnseen() and YELLOW or GREY)
+  f.reqTab:SetText(c(reqCol, ("REQUESTS (%d)"):format(nReq)))
+end
+
+local function refreshQueue(now, me, queue)
+  for _, r in ipairs(reqRows) do r:Hide() end
   for i = 1, ROWS do
     if queue[i] then refreshRow(rows[i], i, queue[i], now, me) else rows[i]:Hide() end
   end
   f.empty:SetText(#queue == 0 and "Nobody in line." or "")
   f.more:SetText(#queue > ROWS and ("+%d more"):format(#queue - ROWS) or "")
+end
+
+local function requestsEmptyText()
+  if not ns.Session.IsActive() then return "Summon requests from chat show here while you're open." end
+  if IsInGroup() and not ns.Session.IsSummoner(ns.Me()) then return "Only summoners see requests." end
+  if ns.db.readRequests == false then return "Reading chat for requests is off." end
+  if not ns.Locations.Current() then return "Requests show up while you're in a capital city." end
+  return "No summon requests in chat yet."
+end
+
+local function refreshRequests(now, leads)
+  for _, r in ipairs(rows) do r:Hide() end
+  ns.Leads.MarkSeen(now)
+  for i = 1, ROWS do
+    local r, l = reqRows[i], leads[i]
+    if l then
+      r.from = l.from
+      local claimed = l.claimedBy ~= nil
+      r.name:SetText(claimed and c(GREY, ns.Short(l.from)) or ns.Short(l.from))
+      r.text:SetText(claimed and c(GREY, ns.Short(l.claimedBy) .. " whispered")
+        or c(YELLOW, '"' .. l.text .. '"'))
+      r.age:SetText(c(GREY, ago(now - l.at)))
+      r.whisper:SetShown(not claimed)
+      r.close:SetShown(not claimed)
+      r:Show()
+    else
+      r:Hide()
+    end
+  end
+  f.empty:SetText(#leads == 0 and requestsEmptyText() or "")
+  f.more:SetText(#leads > ROWS and ("+%d more"):format(#leads - ROWS) or "")
 end
 
 local function refreshFooter(list, now, leader, active)
@@ -367,7 +439,9 @@ function UI.Refresh()
   sumGear:SetShown(leader and IsInGroup())
   local list = ns.Session.ActiveSummoners()
   refreshSummoners(list, me)
-  refreshQueue(now, me)
+  local queue, leads = ns.Queue.Sorted(), ns.Leads.Sorted()
+  refreshTabs(#queue, ns.Leads.Count())
+  if UI.view == "requests" then refreshRequests(now, leads) else refreshQueue(now, me, queue) end
   refreshFooter(list, now, leader, active)
 
   for _, p in ipairs(UI.panels) do

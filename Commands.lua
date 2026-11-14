@@ -6,6 +6,7 @@ local HELP = {
   "/sc keywords inv,invite,summon,+ - whisper triggers",
   "/sc thanks <text> - whisper sent when you kick a paid customer",
   "/sc bl add First Last [reason] | bl del First Last | bl list",
+  "/sc sound on|off - quiet sound for new summon requests from chat",
   "/sc reset - reset the session earnings",
   "/sc stats - lifetime earnings",
 }
@@ -63,6 +64,12 @@ function commands.debug()
   for n in pairs(Roster.peers) do P("  addon heard from:", n) end
   P("queue holder", ns.Sync.AuthorityName(), "| summoners:",
     #ns.S.summoners > 0 and table.concat(ns.S.summoners, ", ") or "(none)")
+end
+
+function commands.sound(rest)
+  rest = rest:lower()
+  if rest == "on" or rest == "off" then ns.db.requestSound = rest == "on" end
+  ns.Print("Sound for new requests: " .. (ns.db.requestSound and "on" or "off"))
 end
 
 function commands.reset()
