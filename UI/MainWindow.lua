@@ -204,11 +204,10 @@ function UI.Build()
     f.summoners[i] = line
   end
 
-  -- Queue | Requests
-  f.queueTab = Wd.Tab(f, function() UI.ShowView("queue") end)
-  f.queueTab:SetPoint("TOPLEFT", 12, Y_QUEUE + 2)
-  f.reqTab = Wd.Tab(f, function() UI.ShowView("requests") end)
-  f.reqTab:SetPoint("LEFT", f.queueTab, "RIGHT", 6, 0)
+  -- Queue | Requests switch
+  f.switch = Wd.Switch(f, 250, { "queue", "requests" }, UI.ShowView)
+  f.switch:SetPoint("TOPLEFT", 12, Y_QUEUE + 5)
+  f.queueTab, f.reqTab = f.switch.segments.queue.text, f.switch.segments.requests.text -- handles for tests
   rows, reqRows = {}, {}
   for i = 1, ROWS do rows[i] = buildRow(i) end
   for i = 1, ROWS do reqRows[i] = buildRequestRow(i) end
@@ -361,10 +360,11 @@ end
 
 local function refreshTabs(nQueue, nReq)
   local q, r = UI.view == "queue", UI.view == "requests"
-  f.queueTab:SetText(c(q and "ffffff" or GREY, ("QUEUE (%d)"):format(nQueue)))
+  f.switch:SetActive(UI.view)
+  f.switch:SetLabel("queue", c(q and "ffffff" or GREY, ("QUEUE (%d)"):format(nQueue)))
   -- A new request only lights up the label; it never switches the view.
   local reqCol = r and "ffffff" or (ns.Leads.HasUnseen() and YELLOW or GREY)
-  f.reqTab:SetText(c(reqCol, ("REQUESTS (%d)"):format(nReq)))
+  f.switch:SetLabel("requests", c(reqCol, ("REQUESTS (%d)"):format(nReq)))
 end
 
 local function refreshQueue(now, me, queue)
