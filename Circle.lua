@@ -139,8 +139,18 @@ function ns:IsAuthority()
   return self:AuthorityName() == ns.Me()
 end
 
--- "The leader" as far as the UI is concerned (price, summoner picker, Advertise).
-ns.IsLeader = ns.IsAuthority
+-- Leader controls (open/close, summoner picker, price, Advertise) belong to
+-- the actual group leader, or to you when you're solo. This is separate
+-- from who holds the state, which can fall back to another summoner.
+function ns:IsLeader()
+  return not IsInGroup() or ns.IsGroupLeader("player")
+end
+
+function ns:GroupLeaderName()
+  for name, r in pairs(ns.roster) do
+    if r.rank == 2 then return name end
+  end
+end
 
 function ns:CanInvite()
   if not IsInGroup() then return true end
@@ -499,6 +509,10 @@ function ns:NextAction()
   if not self:IsActive() then
     if self:IsLeader() then
       return { text = "Closed. Click Open for business when your summoners are ready." }
+    end
+    local leaderName = self:GroupLeaderName()
+    if leaderName and not self:HasAddon(leaderName) then
+      return { text = ("Closed. The group leader (%s) needs Summon Circle to open for business."):format(ns.Short(leaderName)) }
     end
     return { text = "Closed. The group leader opens for business." }
   end

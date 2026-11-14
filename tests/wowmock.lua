@@ -39,6 +39,10 @@ function FrameMT.Enable(f) f._enabled = true end
 function FrameMT.Disable(f) f._enabled = false end
 function FrameMT.SetEnabled(f, v) f._enabled = v end
 function FrameMT.StartMoving() end
+function FrameMT.GetFrameLevel(f) return rawget(f, "_level") or 1 end
+function FrameMT.SetFrameLevel(f, l) f._level = l end
+function FrameMT.GetFrameStrata(f) return rawget(f, "_strata") or "MEDIUM" end
+function FrameMT.SetFrameStrata(f, s) f._strata = s end
 
 function CreateFrame(kind, name, parent, template) return newFrame(name) end
 UIParent = newFrame("UIParent")
@@ -109,7 +113,8 @@ function GetRealZoneText() return "Undercity" end
 function GetServerTime() return os.time() end
 local t0 = os.clock()
 function GetTime() return 1000 + (os.clock() - t0) end
-function InCombatLockdown() return false end
+COMBAT = false
+function InCombatLockdown() return COMBAT end
 function GetCVarBool() return true end
 function GetChannelList() return 1, "General - Undercity", false, 2, "Trade - City", false end
 function IsInGroupCat() end

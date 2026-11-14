@@ -125,11 +125,20 @@ local function buildMain()
   f:SetMovable(true)
   f:EnableMouse(true)
   f:RegisterForDrag("LeftButton")
-  f:SetScript("OnDragStart", f.StartMoving)
+  f:SetScript("OnDragStart", function(self)
+    self:StartMoving()
+    self:SetScript("OnUpdate", function() ns:PlaceActionButton() end)
+  end)
   f:SetScript("OnDragStop", function(self)
     self:StopMovingOrSizing()
+    self:SetScript("OnUpdate", nil)
     local p, _, rp, x, y = self:GetPoint()
     ns.db.ui.pos = { p, rp, x, y }
+    ns:PlaceActionButton()
+  end)
+  -- The action button isn't part of the window (see below), so hide it too.
+  f:SetScript("OnHide", function()
+    if big and not InCombatLockdown() then big:Hide() end
   end)
   local pos = ns.db.ui.pos
   if pos then f:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4]) else f:SetPoint("CENTER") end
@@ -175,10 +184,16 @@ local function buildMain()
 
   -- One secure button for every action. For a summon it runs a macro;
   -- for everything else it runs our function in PostClick.
-  big = CreateFrame("Button", "SummonCircleActionButton", banner,
+  -- It can cast spells, which makes it "protected": WoW won't let addons
+  -- show or hide it (or any window containing it) during combat. So it is
+  -- NOT a child of the window: it floats on top of the banner, hides
+  -- itself as combat starts, and the window can open/close any time.
+  big = CreateFrame("Button", "SummonCircleActionButton", UIParent,
     "SecureActionButtonTemplate,UIPanelButtonTemplate")
   big:SetSize(W - 80, 28)
-  big:SetPoint("BOTTOM", 0, 10)
+  big:SetFrameStrata(f:GetFrameStrata())
+  big:SetFrameLevel(f:GetFrameLevel() + 20)
+  big:Hide()
   -- Secondary choice (e.g. "Kick + blacklist") shown beside the big button.
   f.alt = button(banner, "", 150, 28)
   f.alt:SetPoint("BOTTOMRIGHT", -20, 10)
@@ -223,6 +238,7 @@ local function buildMain()
   f.earnings:SetPoint("RIGHT", adBtn, "LEFT", -10, 0)
   f.earnings:SetJustifyV("BOTTOM")
 
+  f.sumGear, f.adBtn, f.adGear = sumGear, adBtn, adGear -- handles for tests
   f:SetShown(ns.db.ui.shown ~= false)
 end
 
@@ -446,7 +462,7 @@ function ns:Refresh()
   f.title:SetText("Summon Circle  " .. c(GREY, GetRealZoneText() or ""))
 
   -- Status bar
-  local host = ns.Short(self:AuthorityName())
+  local host = ns.Short(self:GroupLeaderName() or self:AuthorityName())
   if active then
     f.status:SetBackdropColor(0.05, 0.30, 0.10, 0.95)
     f.status:SetBackdropBorderColor(0.25, 1, 0.35, 1)
@@ -487,15 +503,12 @@ function ns:Refresh()
       big:SetAttribute("macrotext", nil)
       big.target, big.fn = nil, a.fn
     end
-    big:ClearAllPoints()
-    if a.alt then
-      big:SetSize(W - 80 - 160, 28)
-      big:SetPoint("BOTTOMLEFT", 20, 10)
-    else
-      big:SetSize(W - 80, 28)
-      big:SetPoint("BOTTOM", 0, 10)
-    end
+    big.withAlt = a.alt ~= nil
+    big:SetSize(a.alt and (W - 240) or (W - 80), 28)
+    self:PlaceActionButton()
     if a.label then big:SetText(a.label); big:Show() else big:Hide() end
+  elseif a.label then
+    f.bannerText:SetText(a.text .. "\n" .. c(GREY, "Available after combat."))
   end
 
   -- Summoners
@@ -567,11 +580,28 @@ function ns:Refresh()
   refreshAdPanel()
 end
 
+-- Put the floating action button over the banner (out of combat only).
+function ns:PlaceActionButton()
+  if not f or not big or InCombatLockdown() then return end
+  local left, bottom = f.banner:GetLeft(), f.banner:GetBottom()
+  if not left or not bottom then return end
+  local s = f.banner:GetEffectiveScale() / UIParent:GetEffectiveScale()
+  big:ClearAllPoints()
+  if big.withAlt then
+    big:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", (left + 20) * s, (bottom + 10) * s)
+  else
+    big:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", (left + f.banner:GetWidth() / 2) * s, (bottom + 10) * s)
+  end
+end
+
+-- Entering combat: last moment we may hide the protected button.
+ns:On("PLAYER_REGEN_DISABLED", function() if big then big:Hide() end end)
+ns:On("PLAYER_REGEN_ENABLED", function() ns:Refresh() end)
+
 function ns:ToggleUI(show)
   if not f then
     return ns.Print("The window failed to load. Look for a red error line above and screenshot it.")
   end
-  if InCombatLockdown() then return ns.Print("Can't open or close the window in combat.") end
   if show == nil then show = not f:IsShown() end
   f:SetShown(show)
   ns.db.ui.shown = show
