@@ -47,42 +47,32 @@ function Widgets.Checkbox(parent)
   return cb
 end
 
--- A segmented switch: one framed pill split into halves; the active half is
--- filled with the banner's purple. Switch(parent, width, { "a", "b" }, onSelect)
---   sw:SetActive("a")            fill that half
---   sw:SetLabel("b", text)       set a half's text (colour it with c())
---   sw.segments.a.text           the half's font string
-function Widgets.Switch(parent, width, keys, onSelect)
-  local sw = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-  sw:SetSize(width, 22)
-  sw:SetBackdrop(Widgets.BACKDROP)
-  sw:SetBackdropColor(0, 0, 0, 0.35)
-  sw:SetBackdropBorderColor(0.55, 0.45, 0.65, 1)
+-- A text switch: labels side by side; the active one is underlined, and
+-- hovering lights a label up. Switch(parent, segmentWidth, { "a", "b" }, onSelect)
+--   sw:SetActive("a")            underline that label
+--   sw:SetLabel("b", text)       set a label's text (colour it with c())
+--   sw.segments.a.text           the label's font string
+function Widgets.Switch(parent, segWidth, keys, onSelect)
+  local sw = CreateFrame("Frame", nil, parent)
+  sw:SetSize(segWidth * #keys, 20)
   sw.segments = {}
-  local inner = width - 8
-  local half = inner / #keys
   for i, key in ipairs(keys) do
     local seg = CreateFrame("Button", nil, sw)
-    seg:SetSize(half, 16)
-    seg:SetPoint("LEFT", sw, "LEFT", 4 + (i - 1) * half, 0)
-    seg.fill = seg:CreateTexture(nil, "BACKGROUND")
-    seg.fill:SetAllPoints()
-    seg.fill:SetColorTexture(0.30, 0.14, 0.42, 0.95)
-    seg.fill:Hide()
+    seg:SetSize(segWidth, 20)
+    seg:SetPoint("LEFT", sw, "LEFT", (i - 1) * segWidth, 0)
     seg:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
     seg.text = Widgets.Text(seg, "GameFontNormalSmall", "CENTER")
-    seg.text:SetPoint("CENTER")
+    seg.text:SetPoint("CENTER", 0, 1)
+    seg.underline = seg:CreateTexture(nil, "ARTWORK")
+    seg.underline:SetColorTexture(0.69, 0.44, 1, 1)
+    seg.underline:SetSize(segWidth - 20, 2)
+    seg.underline:SetPoint("BOTTOM", 0, 0)
+    seg.underline:Hide()
     seg:SetScript("OnClick", function() onSelect(key) end)
-    if i > 1 then
-      local div = sw:CreateTexture(nil, "ARTWORK")
-      div:SetColorTexture(0.55, 0.45, 0.65, 0.8)
-      div:SetSize(1, 14)
-      div:SetPoint("LEFT", sw, "LEFT", 4 + (i - 1) * half, 0)
-    end
     sw.segments[key] = seg
   end
   function sw:SetActive(active)
-    for key, seg in pairs(self.segments) do seg.fill:SetShown(key == active) end
+    for key, seg in pairs(self.segments) do seg.underline:SetShown(key == active) end
   end
   function sw:SetLabel(key, text)
     self.segments[key].text:SetText(text)

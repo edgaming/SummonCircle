@@ -205,8 +205,8 @@ function UI.Build()
   end
 
   -- Queue | Requests switch
-  f.switch = Wd.Switch(f, 250, { "queue", "requests" }, UI.ShowView)
-  f.switch:SetPoint("TOPLEFT", 12, Y_QUEUE + 5)
+  f.switch = Wd.Switch(f, 110, { "queue", "requests" }, UI.ShowView)
+  f.switch:SetPoint("TOPLEFT", 6, Y_QUEUE + 4)
   f.queueTab, f.reqTab = f.switch.segments.queue.text, f.switch.segments.requests.text -- handles for tests
   rows, reqRows = {}, {}
   for i = 1, ROWS do rows[i] = buildRow(i) end
