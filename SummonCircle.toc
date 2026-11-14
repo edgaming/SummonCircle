@@ -4,6 +4,7 @@
 ## Author: SummonCircle
 ## Version: @project-version@
 ## SavedVariables: SummonCircleDB
+## IconTexture: Interface\AddOns\SummonCircle\Media\icon
 
 Core.lua
 Comm.lua

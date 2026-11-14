@@ -48,3 +48,4 @@ The queue, earnings and blacklist are only sent privately to the summoners the l
 - **Tests:** `pip install lupa`, then `python tests/run.py`. This loads the addon in a fake WoW environment (`tests/wowmock.lua`) and runs every `tests/t_*.lua` scenario. The tests also run on GitHub for every push.
 - **Releasing:** change the number in `VERSION` (e.g. `0.6.1`) and push to `main`. GitHub Actions runs the tests, creates the tag, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.
 - The version shown in game comes from the tag. The `@project-version@` placeholder in the `.toc` is filled in when the release is packaged.
+- **Art:** `art/icon.svg` is the icon source. `Media/icon.tga` (64×64) is the in-game icon, set via `## IconTexture` in the `.toc`. `art/social-preview.png` is the 1280×640 banner used for the GitHub social preview, which WowUp shows as the addon's image.

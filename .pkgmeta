@@ -5,3 +5,4 @@ ignore:
   - .github
   - .gitignore
   - VERSION
+  - art
