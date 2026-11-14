@@ -38,10 +38,10 @@ function ns:ScanRoster()
   wipe(ns.roster)
   if IsInRaid() then
     for i = 1, GetNumGroupMembers() do
-      local name, rank, _, _, _, _, zone, online = GetRaidRosterInfo(i)
+      local name, rank, _, _, _, class, zone, online = GetRaidRosterInfo(i)
       local key = ns.UnitKey("raid" .. i) or (name and ns.Full(name))
       if key then
-        ns.roster[key] = { unit = "raid" .. i, zone = zone, online = online, rank = rank }
+        ns.roster[key] = { unit = "raid" .. i, zone = zone, online = online, rank = rank, class = class }
       end
     end
   elseif IsInGroup() then
@@ -50,6 +50,7 @@ function ns:ScanRoster()
       if key then
         ns.roster[key] = {
           unit = u, online = UnitIsConnected(u), rank = ns.IsGroupLeader(u) and 2 or 0,
+          class = select(2, UnitClass(u)),
         }
       end
     end
@@ -407,6 +408,21 @@ end
 
 ---------------------------------------------------------------------------
 -- Leader: picking summoners
+---------------------------------------------------------------------------
+-- Who the leader can pick: warlocks in the group who aren't customers in
+-- the queue. Me first, then everyone else alphabetically.
+function ns:SummonerCandidates()
+  local me, S = ns.Me(), ns.S
+  local out = {}
+  for name, r in pairs(ns.roster) do
+    if name ~= me and not S.queue[name] and r.class == "WARLOCK" then out[#out + 1] = name end
+  end
+  table.sort(out)
+  table.insert(out, 1, me)
+  return out
+end
+
+---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 function ns:SetSummoner(name, on)
   if not self:IsLeader() then return end

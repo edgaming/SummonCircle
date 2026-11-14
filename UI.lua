@@ -253,13 +253,8 @@ end
 
 local function refreshSummonerPanel()
   if not sumPanel:IsShown() then return end
-  local me, S = ns.Me(), ns.S
-  local people = {}
-  for name in pairs(ns.roster) do
-    if name ~= me and not S.queue[name] then people[#people + 1] = name end
-  end
-  table.sort(people)
-  table.insert(people, 1, me)
+  local me = ns.Me()
+  local people = ns:SummonerCandidates()
 
   if not IsInGroup() then
     sumPanel.empty:SetText("Invite the other summoners to your group, then tick them here.")

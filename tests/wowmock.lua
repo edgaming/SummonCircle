@@ -98,7 +98,8 @@ function UnitIsGroupLeader(u, cat) if cat then return false end local m = member
 function UnitIsGroupAssistant(u, cat) if cat then return false end local m = member(u); return m and m.assist or false end
 function GetRaidRosterInfo(i)
   local m = GROUP[i]; if not m then return end
-  return m.name, m.leader and 2 or (m.assist and 1 or 0), 1, 60, "Warlock", "WARLOCK", m.zone or "Undercity", true
+  local class = m.class or "WARLOCK"
+  return m.name, m.leader and 2 or (m.assist and 1 or 0), 1, 60, class, class, m.zone or "Undercity", true
 end
 function UnitIsAFK() return false end
 function UnitPower() return 0 end
@@ -147,4 +148,9 @@ C_ChatInfo = {
   SendAddonMessage = function(prefix, text, chatType, target) ADDON_MSGS[#ADDON_MSGS+1] = { text = text, chatType = chatType, target = target } return 0 end,
 }
 PLAYER_CLASS = "WARLOCK"
-function UnitClass() return "Warlock", PLAYER_CLASS end
+function UnitClass(u)
+  if u == nil or u == "player" then return "Warlock", PLAYER_CLASS end
+  local m = member(u)
+  local class = m and m.class or "WARLOCK"
+  return class, class
+end
