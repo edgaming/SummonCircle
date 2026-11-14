@@ -5,12 +5,27 @@ local Advertise = ns:Module("Advertise")
 
 Advertise.doneAt = nil -- GetTime() of the last ad
 
+-- Player communities are listed as "Community:<club>:<stream>". Show the
+-- community's name instead ("Summoners Guild", or "Summoners Guild - Trade"
+-- for a channel other than its General one). The raw name stays the key.
+function Advertise.ChannelLabel(name)
+  local club, stream = name:match("^Community:(%d+):(%d+)$")
+  if not club or not C_Club then return name end
+  local ok, info = pcall(C_Club.GetClubInfo, club)
+  if not ok or type(info) ~= "table" or not info.name or info.name == "" then return name end
+  local ok2, s = pcall(C_Club.GetStreamInfo, club, stream)
+  if ok2 and type(s) == "table" and s.name and s.name ~= "" and s.streamType ~= 0 and s.name ~= "General" then
+    return info.name .. " - " .. s.name
+  end
+  return info.name
+end
+
 function Advertise.JoinedChannels()
   local list, t = {}, { GetChannelList() }
   for i = 1, #t, 3 do
     local id, name, disabled = t[i], t[i + 1], t[i + 2]
     if type(id) == "number" and type(name) == "string" and not disabled then
-      list[#list + 1] = { id = id, name = name }
+      list[#list + 1] = { id = id, name = name, label = Advertise.ChannelLabel(name) }
     end
   end
   return list
@@ -45,7 +60,7 @@ function Advertise.Text()
   local text = ns.db.adText
     :gsub("{city}", GetRealZoneText() or "")
     :gsub("{price}", ns.Money(ns.S.price))
-    :gsub("{queue}", waiting > 0 and (" - " .. waiting .. " in queue") or " - no wait!")
+    :gsub("{queue}", waiting > 0 and (waiting .. " in queue") or "no wait!")
   return text
 end
 

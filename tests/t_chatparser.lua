@@ -21,7 +21,7 @@ end
 check("fixture file has lines", n > 30)
 
 -- Our own ad isn't a request, even with the WTS edited out.
-local fp = P.AdFingerprint("Summons to {city} - {price} - whisper 'inv' for instant invite{queue}")
+local fp = P.AdFingerprint("Summons to {city} - {price} - whisper 'inv' for instant invite - {queue}")
 eq("fingerprint: longest run of 3+ words", fp, "whisper inv for instant invite")
 check("own ad wording skipped", P.Classify("Summons to UC - 30s - whisper 'inv' for instant invite", Loc.Get("undercity"), fp) == nil)
 check("buyer still matches with a fingerprint", P.Classify("WTB summon to UC", Loc.Get("undercity"), fp) ~= nil)

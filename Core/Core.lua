@@ -28,7 +28,7 @@ local DEFAULTS = {
   price = 3000,                          -- copper (30s)
   keywords = { "inv", "invite", "summon", "+" }, -- whisper triggers (whole message, case-insensitive)
   channels = false,                      -- [channel name] = true; false = auto (Trade)
-  adText = "WTS summons to {city} - {price} - whisper 'inv' for instant invite{queue}",
+  adText = "WTS summons to {city} - {price} - whisper 'inv' for instant invite - {queue}",
   adCooldown = 60,                       -- seconds between ads
   readRequests = true,                   -- read the ad channels for summon requests
   requestSound = false,                  -- quiet sound when a new request arrives

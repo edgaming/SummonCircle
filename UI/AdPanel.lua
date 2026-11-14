@@ -40,7 +40,7 @@ local function buildChannels()
   p.checks = {}
   for i = 1, CHAN_ROWS do
     local cb = Wd.Checkbox(p)
-    cb:SetPoint("TOPLEFT", 12, -102 - (i - 1) * 22)
+    cb:SetPoint("TOPLEFT", 12, -102 - (i - 1) * 21)
     cb:SetScript("OnClick", function(self)
       ns.Advertise.SetChannel(self.channel, self:GetChecked())
       ns.Update()
@@ -50,23 +50,30 @@ local function buildChannels()
   p.noChan = Wd.Text(p, "GameFontDisable")
   p.noChan:SetPoint("TOPLEFT", 16, -106)
   p.noChan:SetText("You haven't joined any chat channels.")
+end
 
-  -- The same channels are read for summon requests (Requests list).
-  local read = Wd.Checkbox(p)
-  read:SetPoint("TOPLEFT", 12, -102 - CHAN_ROWS * 22 - 2)
-  read.label:SetText("Read these channels for summon requests")
+-- Everything below the channel list sits in one frame that moves up or
+-- down with the number of channels, so there's never a gap.
+local function buildListen(lower)
+  Wd.Section(lower, "Listen", 0)
+  local read = Wd.Checkbox(lower)
+  read:SetPoint("TOPLEFT", 12, -16)
+  read.label:SetText("Watch for summon requests")
   read:SetScript("OnClick", function(self)
     ns.db.readRequests = self:GetChecked() and true or false
     ns.Update()
   end)
   p.read = read
+  p.readHint = Wd.Text(lower, "GameFontDisableSmall")
+  p.readHint:SetPoint("TOPLEFT", 38, -40)
+  p.readHint:SetWidth(240)
 end
 
 -- A multi-line text block (wraps instead of scrolling sideways), then the preview.
-local function buildMessage()
-  local y = -102 - CHAN_ROWS * 22 - 34
-  Wd.Section(p, "Message", y)
-  local holder = CreateFrame("Frame", nil, p, "BackdropTemplate")
+local function buildMessage(lower)
+  local y = -70
+  Wd.Section(lower, "Message", y)
+  local holder = CreateFrame("Frame", nil, lower, "BackdropTemplate")
   holder:SetPoint("TOPLEFT", 14, y - 16)
   holder:SetSize(262, 70)
   holder:SetBackdrop(Wd.BACKDROP)
@@ -90,12 +97,12 @@ local function buildMessage()
   holder:EnableMouse(true)
   holder:SetScript("OnMouseDown", function() box:SetFocus() end)
   p.box = box
-  local hint = Wd.Text(p, "GameFontDisableSmall")
+  local hint = Wd.Text(lower, "GameFontDisableSmall")
   hint:SetPoint("TOPLEFT", 16, y - 92)
   hint:SetText("{city}, {price} and {queue} fill in automatically.")
 
-  Wd.Section(p, "Preview", y - 114)
-  p.preview = Wd.Text(p, "GameFontHighlightSmall")
+  Wd.Section(lower, "Preview", y - 114)
+  p.preview = Wd.Text(lower, "GameFontHighlightSmall")
   p.preview:SetPoint("TOPLEFT", 16, y - 130)
   p.preview:SetWidth(262)
   p.preview:SetJustifyV("TOP")
@@ -105,7 +112,10 @@ function panel.Build(anchor, height)
   p = Wd.SidePanel(anchor, "Advertising", height)
   buildPrice()
   buildChannels()
-  buildMessage()
+  p.lower = CreateFrame("Frame", nil, p)
+  p.lower:SetSize(290, 300)
+  buildListen(p.lower)
+  buildMessage(p.lower)
   return p
 end
 
@@ -117,14 +127,25 @@ function panel.Refresh()
     local ch = chans[i]
     if ch then
       cb.channel = ch.name
-      cb.label:SetText(("%d. %s"):format(ch.id, ch.name))
+      cb.label:SetText(("%d. %s"):format(ch.id, ch.label))
       cb:SetChecked(ns.Advertise.IsChannel(ch.name))
       cb:Show()
     else
       cb:Hide()
     end
   end
-  p.read:SetChecked(ns.db.readRequests ~= false)
+  -- The lower half starts right under the last channel.
+  local shown = math.max(1, math.min(#chans, CHAN_ROWS))
+  p.lower:ClearAllPoints()
+  p.lower:SetPoint("TOPLEFT", p, "TOPLEFT", 0, -102 - shown * 21 - 8)
+
+  -- Listening needs at least one ticked channel; until then it's greyed out.
+  local any = #ns.Advertise.Channels() > 0
+  p.read:SetChecked(any and ns.db.readRequests ~= false)
+  p.read:SetEnabled(any)
+  p.read.label:SetText(Wd.c(any and "ffffff" or Wd.GREY, "Watch for summon requests"))
+  p.readHint:SetText(any and "Players asking for a summon to your city in these channels show up under Requests."
+    or "Tick a channel above to watch it for summon requests.")
   if not p.box:HasFocus() then p.box:SetText(ns.db.adText) end
   p.preview:SetText(Wd.c(Wd.YELLOW, ns.Advertise.Text()))
 end
