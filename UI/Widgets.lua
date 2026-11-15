@@ -116,7 +116,8 @@ function Widgets.WindowTab(parent, name, label, onClick)
   -- The template also carries the taller "selected" artwork; it sits on top
   -- of the normal artwork and pokes out below it as a second gold edge.
   for _, key in ipairs({ "LeftActive", "MiddleActive", "RightActive" }) do
-    if t[key] then t[key]:Hide() end
+    local piece = t[key]
+    if type(piece) == "table" and piece.Hide then piece:Hide() end
   end
   t:SetPushedTextOffset(0, 0) -- no "pressed in" text shift
   -- The template's own scripts select/deselect and resize the tab; ours
