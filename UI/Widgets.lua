@@ -104,23 +104,33 @@ function Widgets.Switch(parent, segWidth, keys, onSelect)
   return sw
 end
 
--- A standard WoW tab that hangs below a window. Every tab keeps the
--- unselected shape, so they're all the same size; the selected one keeps
--- the tab's own hover glow lit and has white text.
+-- A standard WoW tab that hangs below a window. We only borrow the tab's
+-- artwork: none of Blizzard's tab functions run, so tabs never change
+-- shape or shift their text. Every tab keeps the unselected look; the
+-- selected one keeps the tab's own hover glow lit and has white text.
 --   tab:SetSelected(true|false)
 function Widgets.WindowTab(parent, name, label, onClick)
   local t = CreateFrame("Button", name, parent, "PanelTabButtonTemplate")
   t:SetText(label)
-  if PanelTemplates_TabResize then pcall(PanelTemplates_TabResize, t, 0, 120) end
+  t:SetSize(115, 32)
+  t:SetPushedTextOffset(0, 0) -- no "pressed in" text shift
+  -- The template's own scripts select/deselect and resize the tab; ours
+  -- only switches pages.
+  t:SetScript("OnShow", nil)
+  t:SetScript("OnEvent", nil)
   t:SetScript("OnClick", onClick)
+  local fs = t:GetFontString()
+  if fs then
+    fs:ClearAllPoints()
+    fs:SetPoint("CENTER", 0, 2)
+  end
   function t:SetSelected(on)
+    if self.selected == on then return end
     self.selected = on
-    -- Never the "active" look: that's the taller version of the tab.
-    if PanelTemplates_DeselectTab then pcall(PanelTemplates_DeselectTab, self) end
     if on then self:LockHighlight() else self:UnlockHighlight() end
-    local fs = self:GetFontString()
-    if fs then
-      if on then fs:SetTextColor(1, 1, 1) else fs:SetTextColor(1, 0.82, 0) end
+    local text = self:GetFontString()
+    if text then
+      if on then text:SetTextColor(1, 1, 1) else text:SetTextColor(1, 0.82, 0) end
     end
   end
   return t

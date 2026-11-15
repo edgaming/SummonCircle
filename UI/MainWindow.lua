@@ -302,7 +302,7 @@ function UI.Build()
     local tab = Wd.WindowTab(f, "SummonCircleFrameTab" .. i, t.label, function() UI.ShowPage(t.key) end)
     tab.key = t.key
     if i == 1 then tab:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 10, 2)
-    else tab:SetPoint("LEFT", f.tabs[i - 1], "RIGHT", -6, 0) end
+    else tab:SetPoint("LEFT", f.tabs[i - 1], "RIGHT", 2, 0) end
     f.tabs[i] = tab
   end
 end
