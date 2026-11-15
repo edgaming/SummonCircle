@@ -107,7 +107,7 @@ end
 -- A standard WoW tab that hangs below a window. We only borrow the tab's
 -- artwork: none of Blizzard's tab functions run, so tabs never change
 -- shape or shift their text. Every tab keeps the unselected look; the
--- selected one keeps the tab's own hover glow lit and has white text.
+-- selected one has a soft gold glow inside it and white text.
 --   tab:SetSelected(true|false)
 function Widgets.WindowTab(parent, name, label, onClick)
   local t = CreateFrame("Button", name, parent, "PanelTabButtonTemplate")
@@ -125,6 +125,14 @@ function Widgets.WindowTab(parent, name, label, onClick)
   t:SetScript("OnShow", nil)
   t:SetScript("OnEvent", nil)
   t:SetScript("OnClick", onClick)
+  -- The selected tab's glow: soft gold light inside the tab, same size tab.
+  t.glow = t:CreateTexture(nil, "ARTWORK")
+  t.glow:SetTexture("Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64")
+  t.glow:SetBlendMode("ADD")
+  t.glow:SetVertexColor(1, 0.82, 0, 0.55)
+  t.glow:SetPoint("TOPLEFT", 8, -4)
+  t.glow:SetPoint("BOTTOMRIGHT", -8, 6)
+  t.glow:Hide()
   local fs = t:GetFontString()
   if fs then
     fs:ClearAllPoints()
@@ -133,7 +141,7 @@ function Widgets.WindowTab(parent, name, label, onClick)
   function t:SetSelected(on)
     if self.selected == on then return end
     self.selected = on
-    if on then self:LockHighlight() else self:UnlockHighlight() end
+    self.glow:SetShown(on)
     local text = self:GetFontString()
     if text then
       if on then text:SetTextColor(1, 1, 1) else text:SetTextColor(1, 0.82, 0) end

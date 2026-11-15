@@ -25,6 +25,7 @@ eq("demo circles: no whisper sent", #SENT, 0)
 -- Tabs: same size, one selected.
 local t1, t2 = SummonCircleFrame.tabs[1], SummonCircleFrame.tabs[2]
 check("tabs: Find a Circle selected", t2.selected and not t1.selected)
+check("tabs: the selected one glows", t2.glow:IsShown() and not t1.glow:IsShown())
 t1:GetScript("OnClick")()
 check("tabs: back to My Circle", UI.page == "circle" and t1.selected and SummonCircleFrame.content:IsShown())
 
