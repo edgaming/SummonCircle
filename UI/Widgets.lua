@@ -1,9 +1,12 @@
--- Summon Circle: small widget helpers and colours shared by every panel.
+-- Summon Circle: small widget helpers shared by every page and panel.
+-- Colours and the hover / selected / new treatments come from Style.lua.
 local ADDON, ns = ...
 local Widgets = ns:Module("Widgets")
+local Style = ns.Style
+local H = Style.hex
 
 Widgets.GREY, Widgets.GREEN, Widgets.YELLOW, Widgets.ORANGE, Widgets.RED, Widgets.PURPLE =
-  "808080", "40ff40", "ffd100", "ff8000", "ff4040", "b070ff"
+  H.GREY, H.GREEN, H.YELLOW, H.ORANGE, H.RED, H.PURPLE
 
 -- Colour a string: c(GREEN, "OPEN")
 function Widgets.c(hex, text) return "|cff" .. hex .. text .. "|r" end
@@ -27,18 +30,15 @@ function Widgets.Button(parent, text, w, h)
   return b
 end
 
--- A light, text-only button: gold text that turns white on hover, with a
--- faint band behind it. For row actions that shouldn't shout.
+-- A light, text-only button for actions on a row: gold text that turns
+-- white on hover, over the standard hover band.
 function Widgets.TextButton(parent, text, width, hoverColor)
   local b = CreateFrame("Button", nil, parent)
   b:SetSize(width or 60, 18)
   b:SetNormalFontObject("GameFontNormalSmall")
   b:SetHighlightFontObject(hoverColor or "GameFontHighlightSmall")
   b:SetText(text)
-  local band = b:CreateTexture(nil, "BACKGROUND")
-  band:SetAllPoints()
-  band:SetColorTexture(1, 1, 1, 0.08)
-  b:SetHighlightTexture(band)
+  Style.Hover(b)
   return b
 end
 
@@ -62,8 +62,8 @@ function Widgets.Checkbox(parent)
   return cb
 end
 
--- A text switch: labels side by side; the active one is underlined, and
--- hovering lights a label up. Switch(parent, segmentWidth, { "a", "b" }, onSelect)
+-- A text switch: labels side by side; the active one has the purple
+-- underline, hover is the standard band, and "new" is a gold pulse. Switch(parent, segmentWidth, { "a", "b" }, onSelect)
 --   sw:SetActive("a")            underline that label
 --   sw:SetLabel("b", text)       set a label's text (colour it with c())
 --   sw:SetPulse("b", true)       a soft glow breathes behind that label
@@ -76,29 +76,15 @@ function Widgets.Switch(parent, segWidth, keys, onSelect)
     local seg = CreateFrame("Button", nil, sw)
     seg:SetSize(segWidth, 20)
     seg:SetPoint("LEFT", sw, "LEFT", (i - 1) * segWidth, 0)
-    seg:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    Style.Hover(seg)
     seg.text = Widgets.Text(seg, "GameFontNormalSmall", "CENTER")
     seg.text:SetPoint("CENTER", 0, 1)
-    seg.underline = seg:CreateTexture(nil, "ARTWORK")
-    seg.underline:SetColorTexture(0.69, 0.44, 1, 1)
-    seg.underline:SetSize(segWidth - 20, 2)
-    seg.underline:SetPoint("BOTTOM", 0, 0)
-    seg.underline:Hide()
-    -- "Something new here": a soft glow that breathes in and out.
-    seg.glow = seg:CreateTexture(nil, "BACKGROUND")
-    seg.glow:SetTexture("Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64")
-    seg.glow:SetBlendMode("ADD")
-    seg.glow:SetVertexColor(1, 0.82, 0, 1)
+    seg.underline = Style.AccentLine(seg, "BOTTOM", segWidth - 20) -- selected
+    -- New: a gold glow that breathes in and out.
+    seg.glow = Style.Glow(seg, "new")
     seg.glow:SetSize(segWidth + 10, 34)
     seg.glow:SetPoint("CENTER", 0, 1)
-    seg.glow:Hide()
-    seg.pulse = seg.glow:CreateAnimationGroup()
-    seg.pulse:SetLooping("BOUNCE")
-    local fade = seg.pulse:CreateAnimation("Alpha")
-    fade:SetFromAlpha(0.15)
-    fade:SetToAlpha(0.9)
-    fade:SetDuration(0.9)
-    fade:SetSmoothing("IN_OUT")
+    seg.pulse = Style.Pulse(seg.glow)
     seg:SetScript("OnClick", function() onSelect(key) end)
     sw.segments[key] = seg
   end
@@ -122,7 +108,7 @@ end
 -- A standard WoW tab that hangs below a window. We only borrow the tab's
 -- artwork: none of Blizzard's tab functions run, so tabs never change
 -- shape or shift their text. Every tab keeps the unselected look; the
--- selected one has a soft gold glow inside it and white text.
+-- selected one has a soft purple glow inside it and white text.
 --   tab:SetSelected(true|false)
 function Widgets.WindowTab(parent, name, label, onClick)
   local t = CreateFrame("Button", name, parent, "PanelTabButtonTemplate")
@@ -140,14 +126,10 @@ function Widgets.WindowTab(parent, name, label, onClick)
   t:SetScript("OnShow", nil)
   t:SetScript("OnEvent", nil)
   t:SetScript("OnClick", onClick)
-  -- The selected tab's glow: soft gold light inside the tab, same size tab.
-  t.glow = t:CreateTexture(nil, "ARTWORK")
-  t.glow:SetTexture("Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64")
-  t.glow:SetBlendMode("ADD")
-  t.glow:SetVertexColor(1, 0.82, 0, 0.55)
+  -- Selected: a soft purple glow inside the tab (same size tab).
+  t.glow = Style.Glow(t, "selected", "ARTWORK")
   t.glow:SetPoint("TOPLEFT", 8, -4)
   t.glow:SetPoint("BOTTOMRIGHT", -8, 6)
-  t.glow:Hide()
   local fs = t:GetFontString()
   if fs then
     fs:ClearAllPoints()

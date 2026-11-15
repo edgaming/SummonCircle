@@ -27,6 +27,7 @@ Domain\Listings.lua
 Domain\Recruit.lua
 Domain\Demo.lua
 Domain\Advisor.lua
+UI\Style.lua
 UI\Widgets.lua
 UI\MainWindow.lua
 UI\SummonerPanel.lua

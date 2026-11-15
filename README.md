@@ -63,13 +63,14 @@ The `.toc` loads the files in this order. Each layer only uses the ones above it
 | `Core/` | Namespace, settings, event dispatch and the internal event bus (`Core.lua`); pure helpers like money and names (`Util.lua`); the thin layer over WoW's API (`Game.lua`); cities and their nicknames (`Locations.lua`). |
 | `Net/` | The wire format (`Protocol.lua`); sending and receiving addon messages (`Transport.lua`); the faction-wide network channel (`Channel.lua`); who's in the group and who runs the addon (`Roster.lua`). |
 | `Domain/` | The circle itself: shared state and sync (`Sync.lua`), open/close and summoners (`Session.lua`), turn order (`Rotation.lua`), earnings (`Ledger.lua`), `Blacklist.lua`, customers (`Queue.lua`), `Advertise.lua`, reading chat for requests (`ChatParser.lua` decides what counts, `Leads.lua` keeps the list), and "what do I do now" (`Advisor.lua`). |
-| `UI/` | Widget helpers, the main window, and one file per side panel. |
+| `UI/` | The style guide in code (`Style.lua`: colours and the hover / selected / new treatments), widget helpers, the main window, one file per page and side panel. |
 | `Commands.lua` | Slash commands. |
 
 A few rules keep it modular:
 - Modules are tables on the namespace (`ns.Queue`, `ns.Session`, ...) and are called with a dot: `ns.Session.Start()`.
 - Features never call WoW's messaging API directly. They use `Transport.Send` and `Transport.Handle("TYPE", fn)`. Message types a client doesn't know are ignored, so new messages don't break older versions.
 - Changes to the shared state are ops, registered with `Sync.RegisterOp` and applied with `Sync.Do`.
+- UI code takes colours and hover/selected/new looks from `UI/Style.lua` (design doc 06), never its own numbers: purple = selected, gold = new, a faint band = hover, status colours only for status.
 - Domain code never touches the UI. It calls `ns.Update()` and the window refreshes itself. Modules announce events (`GROUP_JOINED`, `PEER_SEEN`, `SUMMONERS_CHANGED`, ...) with `ns.Emit`, and others subscribe with `ns.Listen`.
 
 ### Tests

@@ -25,7 +25,7 @@ local p -- the frame
 page.selected = nil -- leader of the picked circle
 
 local function shardColor(n)
-  return n >= 20 and GREEN or n >= 10 and YELLOW or ORANGE
+  return n >= 1 and ns.Style.CountColor(n) or ORANGE
 end
 
 -- Hovering a row: who's in the circle and their shards.
@@ -52,21 +52,10 @@ local function buildRow(i)
   local r = CreateFrame("Button", nil, p)
   r:SetSize(UI.W - 24, ROW_H)
   r:SetPoint("TOPLEFT", 12, Y_TOP - (i - 1) * ROW_H)
-  -- Hover: a faint flat band, like the game's group finder.
-  local hover = r:CreateTexture(nil, "BACKGROUND")
-  hover:SetAllPoints()
-  hover:SetColorTexture(1, 1, 1, 0.06)
-  r:SetHighlightTexture(hover)
-  -- Picked: a soft purple band with a thin purple edge on the left.
-  r.sel = r:CreateTexture(nil, "BACKGROUND")
-  r.sel:SetAllPoints()
-  r.sel:SetColorTexture(0.30, 0.14, 0.42, 0.45)
-  r.sel:Hide()
-  r.edge = r:CreateTexture(nil, "ARTWORK")
-  r.edge:SetPoint("TOPLEFT"); r.edge:SetPoint("BOTTOMLEFT")
-  r.edge:SetWidth(2)
-  r.edge:SetColorTexture(0.69, 0.44, 1, 0.9)
-  r.edge:Hide()
+  ns.Style.Hover(r)
+  -- Picked: the selected band with an accent edge on the left.
+  r.sel = ns.Style.SelectedBand(r)
+  r.edge = ns.Style.AccentLine(r, "LEFT")
   r.name = Wd.Text(r, "GameFontHighlight"); r.name:SetPoint("TOPLEFT", 6, -5)
   r.spot = Wd.Text(r, "GameFontDisable"); r.spot:SetPoint("TOPLEFT", 6, -21)
   r.detail = Wd.Text(r, "GameFontHighlightSmall"); r.detail:SetPoint("TOPLEFT", 6, -37)

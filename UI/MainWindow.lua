@@ -116,8 +116,8 @@ local function buildApplicantRow()
   r:SetSize(W - 44, 18)
   r.text = Wd.Text(r, "GameFontHighlight"); r.text:SetPoint("LEFT", 0, 0); r.text:SetWidth(W - 160)
   r.text:SetWordWrap(false)
-  r.close = Wd.Button(r, "×", 22, 18); r.close:SetPoint("RIGHT", 0, 0)
-  r.invite = Wd.Button(r, "Invite", 62, 18); r.invite:SetPoint("RIGHT", r.close, "LEFT", -2, 0)
+  r.close = Wd.TextButton(r, "×", 20, "GameFontRedSmall"); r.close:SetPoint("RIGHT", 0, 0)
+  r.invite = Wd.TextButton(r, "Invite", 56); r.invite:SetPoint("RIGHT", r.close, "LEFT", -4, 0)
   r.invite:SetScript("OnClick", function() ns.Recruit.Invite(r.name) end)
   r.close:SetScript("OnClick", function() ns.Recruit.Dismiss(r.name) end)
   r:Hide()
@@ -435,7 +435,7 @@ local function refreshApplicants(usedLines, leader)
       r.name = a.name
       r:ClearAllPoints()
       r:SetPoint("TOPLEFT", f.content, "TOPLEFT", 30, y - 14 - (i - 1) * 19)
-      local shards = c(a.shards >= 20 and GREEN or a.shards >= 10 and YELLOW or ORANGE,
+      local shards = c(a.shards >= 1 and ns.Style.CountColor(a.shards) or ORANGE,
         ("%d shard%s"):format(a.shards, a.shards == 1 and "" or "s"))
       r.text:SetText(("%s   %s   %s%s"):format(ns.Short(a.name), c(GREY, a.zone or "?"), shards,
         a.invited and ("   " .. c(GREY, "Invited...")) or ""))
@@ -467,7 +467,7 @@ local function refreshSummoners(list, me)
     local line, n = f.summoners[i], list[i]
     if n then
       local shards = ns.Rotation.ShardsOf(n)
-      local col = shards >= 20 and GREEN or shards >= 10 and YELLOW or shards >= 1 and ORANGE or RED
+      local col = ns.Style.CountColor(shards)
       local count = c(col, ("%d shard%s"):format(shards, shards == 1 and "" or "s"))
       local reason = ns.Rotation.SkipReason(n)
       local name = ns.Short(n) .. (n == me and " (you)" or "")
