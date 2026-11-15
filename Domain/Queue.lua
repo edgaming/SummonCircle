@@ -48,10 +48,9 @@ end
 
 -- The next customer we can summon: in the group, online, not already here.
 function Queue.NextCustomer()
-  local myZone = GetRealZoneText()
   for _, e in ipairs(Queue.Waiting()) do
     local r = Roster.members[e.name]
-    if e.status == "GROUP" and r and r.online and r.zone ~= myZone then return e, r end
+    if e.status == "GROUP" and r and r.online and not Roster.IsHere(r) then return e, r end
   end
 end
 
@@ -200,7 +199,6 @@ end)
 ---------------------------------------------------------------------------
 Sync.OnTick(20, function()
   local S, changed, now = ns.S, false, GetServerTime()
-  local myZone = GetRealZoneText()
   local leavers = {}
   for name, e in pairs(S.queue) do
     if not e.demo then -- made-up customers (/sc demo) stay put
@@ -218,7 +216,7 @@ Sync.OnTick(20, function()
           S.queue[name] = nil; changed = true
         end
       elseif e.status == "SUMMONING" then
-        if r.zone and r.zone == myZone then
+        if Roster.IsHere(r) then
           e.status, e.arrivedAt = "ARRIVED", now; changed = true
         elseif now - (e.castAt or now) > ns.db.summonTimeout then
           if e.caster then

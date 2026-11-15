@@ -9,8 +9,17 @@ local ADDON, ns = ...
 local Roster = ns:Module("Roster")
 local Transport = ns.Transport
 
-Roster.members = {} -- ["First Last"] = { unit, zone, online, rank, class }
+Roster.members = {} -- ["First Last"] = { unit, zone, map, online, rank, class }
 Roster.peers = {}   -- ["First Last"] = { shards, afk, seen }  (other addon users)
+
+-- The map a unit is on (id, name), or nil if the game won't say.
+function Roster.MapOf(unit)
+  if not (C_Map and C_Map.GetBestMapForUnit) then return nil end
+  local ok, id = pcall(C_Map.GetBestMapForUnit, unit)
+  if not ok or type(id) ~= "number" or ns.IsSecret(id) then return nil end
+  local info = C_Map.GetMapInfo and C_Map.GetMapInfo(id)
+  return id, info and info.name or nil
+end
 
 function Roster.Scan()
   local members = Roster.members
@@ -20,16 +29,19 @@ function Roster.Scan()
       local name, rank, _, _, _, class, zone, online = GetRaidRosterInfo(i)
       local key = ns.UnitKey("raid" .. i) or (name and ns.Full(name))
       if key then
-        members[key] = { unit = "raid" .. i, zone = zone, online = online, rank = rank, class = class }
+        local map = Roster.MapOf("raid" .. i)
+        members[key] = { unit = "raid" .. i, zone = zone, map = map, online = online, rank = rank, class = class }
       end
     end
   elseif IsInGroup() then
     for _, u in ipairs({ "player", "party1", "party2", "party3", "party4" }) do
       local key = UnitExists(u) and ns.UnitKey(u)
       if key then
+        -- Parties don't report zones like raids do; ask for the map instead.
+        local map, mapName = Roster.MapOf(u)
         members[key] = {
           unit = u, online = UnitIsConnected(u), rank = ns.IsGroupLeader(u) and 2 or 0,
-          class = select(2, UnitClass(u)),
+          class = select(2, UnitClass(u)), zone = mapName, map = map,
         }
       end
     end
@@ -37,6 +49,15 @@ function Roster.Scan()
   for name in pairs(Roster.peers) do
     if not members[name] then Roster.peers[name] = nil end
   end
+end
+
+-- Is this group member where I am? Same map, or the same zone name.
+function Roster.IsHere(r)
+  if not r then return false end
+  local myMap = Roster.MapOf("player")
+  if r.map and myMap and r.map == myMap then return true end
+  local zone = GetRealZoneText()
+  return r.zone ~= nil and zone ~= nil and r.zone == zone
 end
 
 function Roster.Get(name)

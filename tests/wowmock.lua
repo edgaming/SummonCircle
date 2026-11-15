@@ -117,6 +117,22 @@ function IsInGroup() return #GROUP > 0 end
 function IsInRaid() return RAID and #GROUP > 0 end
 function GetNumGroupMembers() return #GROUP end
 function UnitExists(u) return unitName(u) ~= nil end
+
+-- Maps: each zone name gets a map id; a unit's map is its zone's.
+local mapIds, mapNames = {}, {}
+local function mapId(zone)
+  if not zone then return nil end
+  if not mapIds[zone] then mapNames[#mapNames + 1] = zone; mapIds[zone] = #mapNames end
+  return mapIds[zone]
+end
+C_Map = {
+  GetBestMapForUnit = function(u)
+    if u == "player" then return mapId(ZONE) end
+    local m = member(u)
+    return m and mapId(m.zone or "Undercity")
+  end,
+  GetMapInfo = function(id) return mapNames[id] and { mapID = id, name = mapNames[id] } end,
+}
 function UnitIsConnected() return true end
 function UnitName(u) return unitName(u) end
 function GetUnitName(u, full) return unitName(u) end

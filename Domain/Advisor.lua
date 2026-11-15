@@ -113,7 +113,7 @@ function Advisor.NextAction()
   if cust and nextUp == me then
     local n = ns.Short(cust.name)
     return {
-      text = ("Your turn: summon %s (%s)."):format(n, ro.zone or "?"),
+      text = ro.zone and ("Your turn: summon %s (%s)."):format(n, ro.zone) or ("Your turn: summon %s."):format(n),
       label = "Summon " .. n,
       summon = { unit = ro.unit, name = cust.name },
     }
