@@ -82,7 +82,9 @@ function Recruit.SetRecruiting(on)
 end
 
 function Recruit.Invite(name)
-  if not Roster.IsLeader() or not applicants()[name] then return end
+  local a = applicants()[name]
+  if not Roster.IsLeader() or not a then return end
+  if a.demo then a.invited = true; return ns.Update() end -- made-up applicant (/sc demo)
   ns.API.Invite(name)
   Sync.Do("APPLICANT_INVITED", { name = name })
 end
@@ -145,6 +147,10 @@ end)
 function Recruit.Ask(leader)
   local l = ns.Listings.all[leader]
   if not l or Recruit.RowState(leader) ~= "ask" then return end
+  if l.demo then -- made-up circle (/sc demo): just show the button change
+    Recruit.asked[leader] = GetTime()
+    return ns.Update()
+  end
   local zone, shards = GetRealZoneText() or "?", ns.GetShards()
   ns.Whisper(("Hi, I'm looking to join your summoning circle in %s. I'm in %s with %d soul shards.")
     :format(l.spot, zone, shards), leader)

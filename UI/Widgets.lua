@@ -104,6 +104,35 @@ function Widgets.Switch(parent, segWidth, keys, onSelect)
   return sw
 end
 
+-- A tab that hangs below a window. All tabs are the same size; the
+-- selected one gets a gold edge, gold text and a soft glow.
+--   tab:SetSelected(true|false)
+function Widgets.WindowTab(parent, label, onClick)
+  local t = CreateFrame("Button", nil, parent, "BackdropTemplate")
+  t:SetSize(118, 26)
+  t:SetBackdrop(Widgets.BACKDROP)
+  t:SetBackdropColor(0.06, 0.02, 0.09, 0.92)
+  t.glow = t:CreateTexture(nil, "BACKGROUND")
+  t.glow:SetTexture("Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64")
+  t.glow:SetBlendMode("ADD")
+  t.glow:SetVertexColor(1, 0.82, 0, 0.35)
+  t.glow:SetSize(130, 34)
+  t.glow:SetPoint("CENTER")
+  t.text = Widgets.Text(t, "GameFontNormal", "CENTER")
+  t.text:SetPoint("CENTER", 0, 1)
+  t.text:SetText(label)
+  t:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+  t:SetScript("OnClick", onClick)
+  function t:SetSelected(on)
+    self.selected = on
+    self.glow:SetShown(on)
+    self:SetBackdropBorderColor(on and 1 or 0.5, on and 0.82 or 0.45, on and 0 or 0.55, 1)
+    self.text:SetText(on and Widgets.c("ffd100", label) or Widgets.c(Widgets.GREY, label))
+  end
+  t:SetSelected(false)
+  return t
+end
+
 -- Small gold heading: "SUMMONERS"
 function Widgets.Section(parent, text, y, x)
   local s = Widgets.Text(parent, "GameFontNormalSmall")

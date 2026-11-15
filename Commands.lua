@@ -10,6 +10,7 @@ local HELP = {
   "/sc reset - reset the session earnings",
   "/sc stats - lifetime earnings",
   "/sc net - is the network working?",
+  "/sc demo - made-up circles and applicants to try the window alone",
 }
 
 local commands = {}
@@ -74,6 +75,8 @@ function commands.sound(rest)
 end
 
 function commands.net() ns.Print(ns.Net.Describe()) end
+
+function commands.demo(rest) ns.Demo.Command(rest) end
 
 function commands.reset()
   ns.Sync.Do("RESET", {})

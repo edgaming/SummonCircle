@@ -58,8 +58,11 @@ function UI.AddPage(page)
   UI.pages[#UI.pages + 1] = page
 end
 
+UI.forceTabs = false -- /sc demo tabs: show them on any class (until /reload)
+
 function UI.HasTabs()
-  return select(2, UnitClass("player")) == "WARLOCK" and #UI.pages > 0
+  if #UI.pages == 0 then return false end
+  return UI.forceTabs or select(2, UnitClass("player")) == "WARLOCK"
 end
 
 function UI.ShowPage(key)
@@ -296,17 +299,12 @@ function UI.Build()
     tabs[#tabs + 1] = page
   end
   for i, t in ipairs(tabs) do
-    local tab = CreateFrame("Button", "SummonCircleFrameTab" .. i, f, "PanelTabButtonTemplate")
-    tab:SetID(i)
-    tab:SetText(t.label)
+    local tab = Wd.WindowTab(f, t.label, function() UI.ShowPage(t.key) end)
     tab.key = t.key
-    if i == 1 then tab:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 12, 2)
-    else tab:SetPoint("LEFT", f.tabs[i - 1], "RIGHT", -14, 0) end
-    tab:SetScript("OnClick", function() UI.ShowPage(t.key) end)
-    if PanelTemplates_TabResize then pcall(PanelTemplates_TabResize, tab, 0) end
+    if i == 1 then tab:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 12, 1)
+    else tab:SetPoint("LEFT", f.tabs[i - 1], "RIGHT", 4, 0) end
     f.tabs[i] = tab
   end
-  f.numTabs = #tabs
 end
 
 ---------------------------------------------------------------------------
@@ -548,9 +546,9 @@ end
 local function refreshPages()
   local tabs = UI.HasTabs()
   if not tabs then UI.page = "circle" end
-  for i, tab in ipairs(f.tabs) do
+  for _, tab in ipairs(f.tabs) do
     tab:SetShown(tabs)
-    if tab.key == UI.page and PanelTemplates_SetTab then pcall(PanelTemplates_SetTab, f, i) end
+    tab:SetSelected(tab.key == UI.page)
   end
   for _, page in ipairs(UI.pages) do page.frame:SetShown(page.key == UI.page) end
   f.content:SetShown(UI.page == "circle")
