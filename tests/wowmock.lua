@@ -128,7 +128,8 @@ function GetRaidRosterInfo(i)
   local class = m.class or "WARLOCK"
   return m.name, m.leader and 2 or (m.assist and 1 or 0), 1, 60, class, class, m.zone or "Undercity", true
 end
-function UnitIsAFK() return false end
+AFK = false -- is this player AFK?
+function UnitIsAFK(unit) return unit == "player" and AFK or false end
 function UnitPower() return 0 end
 function GetNormalizedRealmName() return "CAMWOWUS2Realm8PvP" end
 function Ambiguate(name, mode) return (name:gsub("%-[^%-]+$", "")) end

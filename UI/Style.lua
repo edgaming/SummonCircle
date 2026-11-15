@@ -8,9 +8,8 @@
 --           (the quest log's), a soft fading glow
 --   status  green good, yellow attention, orange low, red problem, grey off
 --
--- Buttons: WoW's own buttons for actions (small ones on rows), except
--- Whisper and x on chat requests, which are light text buttons. Icon
--- buttons (the gears) keep the game's own icon highlight.
+-- Buttons: WoW's own buttons for every action (small ones on rows).
+-- Icon buttons (the gears) keep the game's own icon highlight.
 --
 -- Widgets get their colours and treatments from here, never their own
 -- numbers, so a new screen can't drift without changing the guide.

@@ -7,6 +7,12 @@ local Demo = ns:Module("Demo")
 
 local DEMO_FOR = 600 -- seconds fake circles stay listed
 
+-- My Circle demos: make sure that page is showing.
+local function showCircle()
+  Demo.Tabs(true)
+  ns.UI.ShowPage("circle")
+end
+
 local CIRCLES = {
   { leader = "Ash Lock", spot = "Undercity", short = "UC", price = 3000, queue = 4,
     shards = { { n = "Ash Lock", s = 240 }, { n = "Bram Lock", s = 20 } } },
@@ -14,6 +20,8 @@ local CIRCLES = {
     shards = { { n = "Vex Shadow", s = 8 } } },
   { leader = "Moon Lock", spot = "Badlands", price = 2500, queue = 1,
     shards = { { n = "Moon Lock", s = 18 }, { n = "Sol Ember", s = 13 } } },
+  { leader = "Rex Gloom", spot = "Thunder Bluff", short = "TB", price = 5000, queue = 9, full = true,
+    shards = { { n = "Rex Gloom", s = 60 }, { n = "Dax Rune", s = 44 }, { n = "Ola Grim", s = 25 } } },
 }
 
 local APPLICANTS = {
@@ -46,6 +54,7 @@ local function requestEntries(now)
 end
 
 function Demo.Queue()
+  showCircle()
   local me, now = ns.Me(), GetServerTime()
   for _, e in ipairs(queueEntries(me, now)) do
     e.demo = true
@@ -56,6 +65,7 @@ function Demo.Queue()
 end
 
 function Demo.Requests()
+  showCircle()
   local now = GetServerTime()
   for _, l in ipairs(requestEntries(now)) do
     l.channel, l.city, l.demo = "Trade - City", "undercity", true
@@ -72,31 +82,34 @@ function Demo.All()
   Demo.Requests()
 end
 
-function Demo.Tabs()
+function Demo.Tabs(quiet)
   ns.UI.forceTabs = true
   ns.Update()
-  ns.Print("Tabs are on for this character until /reload.")
+  if not quiet then ns.Print("Tabs are on for this character until /reload.") end
 end
 
+
+
 function Demo.Circles()
-  Demo.Tabs()
+  Demo.Tabs(true)
   local now = GetTime()
   for _, c in ipairs(CIRCLES) do
     ns.Listings.all[c.leader] = {
       t = "LISTING", leader = c.leader, contacts = { c.leader }, spot = c.spot, short = c.short,
-      open = true, recruiting = true, summoners = #c.shards, wanted = 3, shards = c.shards,
+      open = true, recruiting = not c.full, summoners = #c.shards, wanted = 3, shards = c.shards,
       price = c.price, queue = c.queue, at = GetServerTime(),
       seen = now + DEMO_FOR - ns.Listings.EXPIRE, demo = true,
     }
   end
   ns.Update()
-  ns.Print("Added 3 made-up circles. Open the Find a Circle tab. They go away in 10 minutes or with /sc demo clear.")
+  ns.Print("Added 4 made-up circles: 3 recruiting (Find a Circle) and 4 open (Find a Summon). They go away in 10 minutes or with /sc demo clear.")
 end
 
 function Demo.Applicants()
   if not ns.Roster.IsLeader() then
     return ns.Print("Only the group leader sees applicants.")
   end
+  showCircle()
   ns.S.applicants = ns.S.applicants or {}
   local at = GetServerTime()
   for i, a in ipairs(APPLICANTS) do
@@ -135,7 +148,7 @@ function Demo.Command(rest)
   elseif sub == "clear" then Demo.Clear()
   else
     ns.Print("/sc demo tabs - show the tabs on any class")
-    ns.Print("/sc demo circles - 3 made-up circles in Find a Circle")
+    ns.Print("/sc demo circles - made-up circles in Find a Circle and Find a Summon")
     ns.Print("/sc demo applicants - 2 made-up applicants under Summoners (leader)")
     ns.Print("/sc demo queue - 7 made-up customers, one at every stage")
     ns.Print("/sc demo requests - 3 made-up summon requests from chat")

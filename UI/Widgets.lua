@@ -30,18 +30,6 @@ function Widgets.Button(parent, text, w, h)
   return b
 end
 
--- A light, text-only button for actions on a row: gold text that turns
--- white on hover, over the standard hover band.
-function Widgets.TextButton(parent, text, width, hoverColor)
-  local b = CreateFrame("Button", nil, parent)
-  b:SetSize(width or 60, 18)
-  b:SetNormalFontObject("GameFontNormalSmall")
-  b:SetHighlightFontObject(hoverColor or "GameFontHighlightSmall")
-  b:SetText(text)
-  Style.Hover(b)
-  return b
-end
-
 function Widgets.Gear(parent, onClick)
   local b = CreateFrame("Button", nil, parent)
   b:SetSize(16, 16)

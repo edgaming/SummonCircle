@@ -60,9 +60,20 @@ end
 
 UI.forceTabs = false -- /sc demo tabs: show them on any class (until /reload)
 
+function UI.IsWarlock()
+  return select(2, UnitClass("player")) == "WARLOCK"
+end
+
+-- A non-warlock leading a circle (rare, but possible) still needs My Circle.
+function UI.LeadsACircle()
+  return IsInGroup() and ns.Roster.IsLeader() and ns.S ~= nil
+    and (ns.Session.IsActive() or #ns.S.summoners > 1)
+end
+
+-- Warlocks get tabs. Everyone else just gets Find a Summon, no tab bar.
 function UI.HasTabs()
   if #UI.pages == 0 then return false end
-  return UI.forceTabs or select(2, UnitClass("player")) == "WARLOCK"
+  return UI.forceTabs or UI.IsWarlock() or UI.LeadsACircle()
 end
 
 function UI.ShowPage(key)
@@ -134,12 +145,11 @@ local function buildRequestRow(i)
   r:SetSize(W - 28, ROW_H)
   r:SetPoint("TOPLEFT", f, "TOPLEFT", 14, Y_ROWS - (i - 1) * ROW_H)
   r.name = Wd.Text(r); r.name:SetPoint("LEFT", 0, 0); r.name:SetWidth(108)
-  r.text = Wd.Text(r); r.text:SetPoint("LEFT", 110, 0); r.text:SetWidth(196)
+  r.text = Wd.Text(r); r.text:SetPoint("LEFT", 110, 0); r.text:SetWidth(186)
   r.text:SetWordWrap(false)
-  r.age = Wd.Text(r, nil, "RIGHT"); r.age:SetPoint("LEFT", 306, 0); r.age:SetWidth(36)
-  -- Light text buttons: a full list shouldn't look like a wall of red.
-  r.close = Wd.TextButton(r, "×", 20, "GameFontRedSmall"); r.close:SetPoint("RIGHT", 0, 0)
-  r.whisper = Wd.TextButton(r, "Whisper", 60); r.whisper:SetPoint("RIGHT", r.close, "LEFT", -4, 0)
+  r.age = Wd.Text(r, nil, "RIGHT"); r.age:SetPoint("LEFT", 300, 0); r.age:SetWidth(36)
+  r.close = Wd.Button(r, "×", 22, 18); r.close:SetPoint("RIGHT", 0, 0)
+  r.whisper = Wd.Button(r, "Whisper", 66, 18); r.whisper:SetPoint("RIGHT", r.close, "LEFT", -2, 0)
   r.whisper:SetScript("OnClick", function() ns.Leads.Whisper(r.from) end)
   r.close:SetScript("OnClick", function() ns.Leads.Dismiss(r.from) end)
   -- The row cuts long messages short; hovering shows all of it.
@@ -580,7 +590,7 @@ end
 
 local function refreshPages()
   local tabs = UI.HasTabs()
-  if not tabs then UI.page = "circle" end
+  if not tabs then UI.page = "summon" end
   for _, tab in ipairs(f.tabs) do
     tab:SetShown(tabs)
     tab:SetSelected(tab.key == UI.page)

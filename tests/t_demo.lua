@@ -86,3 +86,25 @@ check("status: owes someone else", S.ARRIVED({ caster = "Bram Lock", arrivedAt =
 check("status: unpaid", S.ARRIVED({ caster = "Bram Lock", arrivedAt = now - 999 }, now):find("unpaid · owes Bram Lock") ~= nil)
 check("status: I'm summoning", S.SUMMONING({ caster = me, castAt = now - 5 }, now):find("you're summoning · 0:05") ~= nil)
 check("status: someone summoning", S.SUMMONING({ caster = "Bram Lock", castAt = now - 97 }, now):find("Bram Lock summoning · 1:37") ~= nil)
+
+-- Find a Summon with made-up circles (we're a mage standing in Undercity).
+SlashCmdList.SUMMONCIRCLE("demo clear")
+SlashCmdList.SUMMONCIRCLE("demo circles")
+local open = ns.Listings.Open()
+eq("find a summon: open circles, minus the one in our own city", #open, 3)
+check("find a summon: shortest wait first", open[1].queue <= open[2].queue and open[2].queue <= open[3].queue)
+UI.ShowPage("summon")
+local sp = UI.pages[2].frame
+sp.rows[1]:GetScript("OnClick")()
+check("find a summon: picked", sp.get:IsEnabled())
+SENT = {}
+sp.get:GetScript("OnClick")()
+eq("find a summon: a made-up circle gets no whisper", #SENT, 0)
+eq("find a summon: but the button changes", sp.get:GetText(), "Requested")
+-- Already in a group (not a circle's): leave it first.
+GROUP = { { name = "Dana Mage", leader = true }, { name = "Zed Pal" } }
+ns.Roster.Scan()
+ns.Update()
+check("find a summon: in a group, told to leave it first", sp.hint:GetText():find("Leave your group first") ~= nil)
+check("find a summon: and the button is off", not sp.get:IsEnabled())
+GROUP = {}

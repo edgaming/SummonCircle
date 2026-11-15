@@ -44,7 +44,10 @@ end
 function Listings.Build()
   local S, me = ns.S, ns.Me()
   local list = ns.Session.ActiveSummoners()
-  local shards, contacts = {}, { me }
+  -- Contacts: who a customer should whisper. Summoners who can invite and
+  -- aren't AFK; the leader first, unless the leader is AFK.
+  local shards, contacts = {}, {}
+  if not UnitIsAFK("player") then contacts[1] = me end
   for _, n in ipairs(list) do
     shards[#shards + 1] = { n = n, s = ns.Rotation.ShardsOf(n) }
     if n ~= me then
@@ -52,12 +55,14 @@ function Listings.Build()
       if r and (r.rank or 0) > 0 and not (p and p.afk) then contacts[#contacts + 1] = n end
     end
   end
+  if #contacts == 0 then contacts[1] = me end
   local spot, short = Listings.Spot()
   return {
     t = "LISTING", leader = me, contacts = contacts, spot = spot, short = short,
     open = ns.Session.IsActive(), recruiting = S.recruiting == true,
     summoners = #list, wanted = Listings.WANTED, shards = shards,
     price = S.price, queue = #ns.Queue.Waiting(),
+    keyword = ns.db.keywords[1] or "inv", -- what a customer whispers to get in line
   }
 end
 
@@ -136,6 +141,24 @@ function Listings.SummonsLeft(l)
   local total = 0
   for _, s in ipairs(l.shards) do total = total + s.s end
   return total
+end
+
+-- Open circles, for Find a Summon: shortest wait first, then cheapest.
+-- Never your own, one you're grouped with, or one where you already are.
+function Listings.Open()
+  local here = Listings.Spot()
+  local out = {}
+  for leader, l in pairs(Listings.all) do
+    if l.open and leader ~= ns.Me() and not Roster.members[leader] and l.spot ~= here then
+      out[#out + 1] = l
+    end
+  end
+  table.sort(out, function(a, b)
+    if (a.queue or 0) ~= (b.queue or 0) then return (a.queue or 0) < (b.queue or 0) end
+    if a.price ~= b.price then return a.price < b.price end
+    return a.leader < b.leader
+  end)
+  return out
 end
 
 -- Circles looking for summoners, for Find a Circle: closest to full first,
