@@ -67,6 +67,12 @@ def main(check):
     f = ash.g.SummonCircleFrame
     check("view: label no longer highlighted", "ffd100" not in f.reqTab.GetText(f.reqTab))
     check("view: the glow stops once you look", not glow.IsPlaying(glow))
+    ash.eval("SummonCircle.UI.RequestTooltip({ from = 'Gorak Stone' })")
+    tip = list(ash.g.TOOLTIP.values())
+    check("tooltip: the whole message", any('WTB UC summon 20s pls??' in t for t in tip), tip)
+    check("tooltip: what they offer, as coins", any(t.startswith("Offers |") and "SilverIcon" in t for t in tip), tip)
+    check("tooltip: your price and where it was said",
+          any(t.startswith("Your price |") for t in tip) and any(t == "In | Trade - City" for t in tip), tip)
     ash.ns.UI.ShowView("queue")
     check("view: still not highlighted after looking", "ffd100" not in f.reqTab.GetText(f.reqTab))
     w.advance(2)

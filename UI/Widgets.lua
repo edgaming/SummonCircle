@@ -27,6 +27,21 @@ function Widgets.Button(parent, text, w, h)
   return b
 end
 
+-- A light, text-only button: gold text that turns white on hover, with a
+-- faint band behind it. For row actions that shouldn't shout.
+function Widgets.TextButton(parent, text, width, hoverColor)
+  local b = CreateFrame("Button", nil, parent)
+  b:SetSize(width or 60, 18)
+  b:SetNormalFontObject("GameFontNormalSmall")
+  b:SetHighlightFontObject(hoverColor or "GameFontHighlightSmall")
+  b:SetText(text)
+  local band = b:CreateTexture(nil, "BACKGROUND")
+  band:SetAllPoints()
+  band:SetColorTexture(1, 1, 1, 0.08)
+  b:SetHighlightTexture(band)
+  return b
+end
+
 function Widgets.Gear(parent, onClick)
   local b = CreateFrame("Button", nil, parent)
   b:SetSize(16, 16)

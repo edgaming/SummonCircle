@@ -248,3 +248,10 @@ function Boot()
   FireEvent("PLAYER_LOGIN")
 end
 ChatFrame1 = CreateFrame("Frame")
+
+-- Tooltip: records its lines.
+GameTooltip = CreateFrame("Frame")
+TOOLTIP = {}
+function GameTooltip:SetOwner() TOOLTIP = {} end
+function GameTooltip:AddLine(text) TOOLTIP[#TOOLTIP + 1] = tostring(text) end
+function GameTooltip:AddDoubleLine(a, b) TOOLTIP[#TOOLTIP + 1] = tostring(a) .. " | " .. tostring(b) end

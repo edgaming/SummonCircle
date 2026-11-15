@@ -132,11 +132,32 @@ local function buildRequestRow(i)
   r.text = Wd.Text(r); r.text:SetPoint("LEFT", 110, 0); r.text:SetWidth(196)
   r.text:SetWordWrap(false)
   r.age = Wd.Text(r, nil, "RIGHT"); r.age:SetPoint("LEFT", 306, 0); r.age:SetWidth(36)
-  r.close = Wd.Button(r, "×", 22, 18); r.close:SetPoint("RIGHT", 0, 0)
-  r.whisper = Wd.Button(r, "Whisper", 62, 18); r.whisper:SetPoint("RIGHT", r.close, "LEFT", -2, 0)
+  -- Light text buttons: a full list shouldn't look like a wall of red.
+  r.close = Wd.TextButton(r, "×", 20, "GameFontRedSmall"); r.close:SetPoint("RIGHT", 0, 0)
+  r.whisper = Wd.TextButton(r, "Whisper", 60); r.whisper:SetPoint("RIGHT", r.close, "LEFT", -4, 0)
   r.whisper:SetScript("OnClick", function() ns.Leads.Whisper(r.from) end)
   r.close:SetScript("OnClick", function() ns.Leads.Dismiss(r.from) end)
+  -- The row cuts long messages short; hovering shows all of it.
+  r:EnableMouse(true)
+  r:SetScript("OnEnter", function() UI.RequestTooltip(r) end)
+  r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
   return r
+end
+
+-- Who, everything they said, what they offered, where, and when.
+function UI.RequestTooltip(r)
+  local l = r.from and ns.Leads.list[r.from]
+  if not l or not GameTooltip then return end
+  GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
+  GameTooltip:AddLine(ns.Short(l.from), 1, 1, 1)
+  GameTooltip:AddLine('"' .. l.text .. '"', 1, 0.82, 0, true)
+  GameTooltip:AddLine(" ")
+  if l.offer then GameTooltip:AddDoubleLine("Offers", ns.Coins(l.offer), 0.7, 0.7, 0.7, 1, 1, 1) end
+  GameTooltip:AddDoubleLine("Your price", ns.Coins(ns.S.price), 0.7, 0.7, 0.7, 1, 1, 1)
+  GameTooltip:AddDoubleLine("In", l.channel or "?", 0.7, 0.7, 0.7, 1, 1, 1)
+  GameTooltip:AddDoubleLine("Said", ns.Clock(GetServerTime() - l.at) .. " ago", 0.7, 0.7, 0.7, 1, 1, 1)
+  if l.claimedBy then GameTooltip:AddLine(ns.Short(l.claimedBy) .. " already whispered them.", 0.5, 0.5, 0.5) end
+  GameTooltip:Show()
 end
 
 local function buildActionButton()
