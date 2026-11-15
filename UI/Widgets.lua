@@ -104,32 +104,25 @@ function Widgets.Switch(parent, segWidth, keys, onSelect)
   return sw
 end
 
--- A tab that hangs below a window. All tabs are the same size; the
--- selected one gets a gold edge, gold text and a soft glow.
+-- A standard WoW tab that hangs below a window. Every tab keeps the
+-- unselected shape, so they're all the same size; the selected one keeps
+-- the tab's own hover glow lit and has white text.
 --   tab:SetSelected(true|false)
-function Widgets.WindowTab(parent, label, onClick)
-  local t = CreateFrame("Button", nil, parent, "BackdropTemplate")
-  t:SetSize(118, 26)
-  t:SetBackdrop(Widgets.BACKDROP)
-  t:SetBackdropColor(0.06, 0.02, 0.09, 0.92)
-  t.glow = t:CreateTexture(nil, "BACKGROUND")
-  t.glow:SetTexture("Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64")
-  t.glow:SetBlendMode("ADD")
-  t.glow:SetVertexColor(1, 0.82, 0, 0.35)
-  t.glow:SetSize(130, 34)
-  t.glow:SetPoint("CENTER")
-  t.text = Widgets.Text(t, "GameFontNormal", "CENTER")
-  t.text:SetPoint("CENTER", 0, 1)
-  t.text:SetText(label)
-  t:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+function Widgets.WindowTab(parent, name, label, onClick)
+  local t = CreateFrame("Button", name, parent, "PanelTabButtonTemplate")
+  t:SetText(label)
+  if PanelTemplates_TabResize then pcall(PanelTemplates_TabResize, t, 0, 120) end
   t:SetScript("OnClick", onClick)
   function t:SetSelected(on)
     self.selected = on
-    self.glow:SetShown(on)
-    self:SetBackdropBorderColor(on and 1 or 0.5, on and 0.82 or 0.45, on and 0 or 0.55, 1)
-    self.text:SetText(on and Widgets.c("ffd100", label) or Widgets.c(Widgets.GREY, label))
+    -- Never the "active" look: that's the taller version of the tab.
+    if PanelTemplates_DeselectTab then pcall(PanelTemplates_DeselectTab, self) end
+    if on then self:LockHighlight() else self:UnlockHighlight() end
+    local fs = self:GetFontString()
+    if fs then
+      if on then fs:SetTextColor(1, 1, 1) else fs:SetTextColor(1, 0.82, 0) end
+    end
   end
-  t:SetSelected(false)
   return t
 end
 
