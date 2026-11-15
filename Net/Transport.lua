@@ -2,6 +2,7 @@
 --
 --   Transport.Send(msg)          everyone in the group running the addon
 --   Transport.Send(msg, names)   privately (addon whisper) to just those players
+--   Transport.SendDirect(msg, name)  addon whisper to one player, grouped or not
 --   Transport.Handle(t, fn)      fn(sender, msg) for every incoming message of type t
 --
 --   Transport.SendNet(msg)       everyone on our faction running the addon (Net.lua)
@@ -79,6 +80,14 @@ function Transport.DispatchNet(sender, msg)
   if fn then fn(sender, msg) end
 end
 
+function Transport.SendDirect(msg, name)
+  if not name or name == "" then return end
+  msgId = (msgId % 9999) + 1
+  for _, text in ipairs(Protocol.Frames(Protocol.Encode(msg), msgId)) do
+    outq[#outq + 1] = { text = text, target = name }
+  end
+end
+
 -- Hand a decoded message to its handler. Unknown types are ignored.
 function Transport.Dispatch(sender, msg)
   local fn = handlers[msg.t]
@@ -88,13 +97,16 @@ end
 -- Drain the queues, backing off when Blizzard throttles a prefix.
 -- Group first; the network only once the group queue is empty.
 local function pump()
-  while outq[1] do
-    local ch = groupChannel()
-    if not ch then wipe(outq) break end
-    local m = outq[1]
-    local res = C_ChatInfo.SendAddonMessage(ns.PREFIX, m.text, m.target and "WHISPER" or ch, m.target)
-    if THROTTLED and res == THROTTLED then return end
-    table.remove(outq, 1)
+  local i = 1
+  while outq[i] do
+    local m, ch = outq[i], groupChannel()
+    if not m.target and not ch then
+      table.remove(outq, i) -- group message, but we've left the group
+    else
+      local res = C_ChatInfo.SendAddonMessage(ns.PREFIX, m.text, m.target and "WHISPER" or ch, m.target)
+      if THROTTLED and res == THROTTLED then return end
+      table.remove(outq, i)
+    end
   end
   while netq[1] do
     local idx = ns.Net.Available() and ns.Net.Index()
@@ -105,6 +117,9 @@ local function pump()
   end
 end
 C_Timer.NewTicker(0.2, ns.Safe(pump))
+
+-- Send whatever is queued right now (e.g. on logout, when tickers stop).
+Transport.Flush = pump
 C_Timer.NewTicker(15, ns.Safe(function()
   assembler:Prune(GetTime())
   netAssembler:Prune(GetTime())

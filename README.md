@@ -16,10 +16,14 @@ A WoW Forever addon for warlocks who run a summoning service together. One share
 - **Non-payment handling:** customers who don't pay within 3 minutes are flagged. You can kick them or kick and blacklist them, and anyone who leaves without paying can be blacklisted in one click.
 - **Shared blacklist:** blacklisted players aren't invited when they whisper. Every add or removal reaches every Summon Circle user on your faction within seconds, grouped or not, and full lists merge between summoners whenever they group up, so anyone who was offline catches up. Each entry shows who added it.
 
+### For warlocks looking for a circle
+- **Find a Circle:** a tab listing every circle on your faction that's looking for summoners: where it is, how many summoners it has (2/3), its price, its queue, and how many summons it has left (hover for each summoner's shards). One click on **Ask to join** whispers the leader and puts you on their list.
+
 ### For the group leader
 - **Open for business / Close shop:** the addon does nothing until you open. It never interferes with questing groups or dungeons, and it closes itself when you log out or leave the group.
 - **Pick your summoners:** choose which warlocks in the group are summoning. They get assist automatically.
 - **Advertise in one click:** posts your ad to every chat channel you choose, with your city, price and queue length filled in.
+- **Looking for summoners:** tick it and your circle shows up in other warlocks' Find a Circle tab. Applicants appear under your summoners with where they are and how many shards they have; one click invites them, and they become a summoner as soon as they join. Recruiting stops by itself at 3 summoners.
 - **Shared price:** set it once and every summoner's replies and ads use it.
 
 ### Under the hood
@@ -71,7 +75,7 @@ A few rules keep it modular:
 ### Tests
 `pip install lupa`, then `python tests/run.py`. The tests also run on GitHub for every push.
 - `tests/t_*.lua` load the addon in a fake WoW environment (`tests/wowmock.lua`) as one player. The unit tests (`t_util`, `t_protocol`, `t_transport`, `t_locations`) live here too, plus `t_chatparser`, which runs every line in `tests/chat_lines.txt`. When a chat line is misread in game, add it to that file.
-- `tests/t_*.py` are multi-player scenarios. `tests/harness.py` runs a separate copy of the addon for each player in one group and routes addon messages between them the way the game does (group messages to everyone else, addon whispers to one player, realm suffix on sender names). `t_circle.py` runs a full circle from picking summoners to payment. `t_requests.py` covers summon requests from chat across the circle. `t_netblacklist.py` covers blacklist entries spreading over the faction network. `t_resilience.py` covers privacy from customers with the addon, blacklist sharing, timeouts, customers who leave without paying, and the leader leaving mid-session.
+- `tests/t_*.py` are multi-player scenarios. `tests/harness.py` runs a separate copy of the addon for each player in one group and routes addon messages between them the way the game does (group messages to everyone else, addon whispers to one player, realm suffix on sender names). `t_circle.py` runs a full circle from picking summoners to payment. `t_requests.py` covers summon requests from chat across the circle. `t_findcircle.py` covers circles recruiting over the network and warlocks asking to join. `t_netblacklist.py` covers blacklist entries spreading over the faction network. `t_resilience.py` covers privacy from customers with the addon, blacklist sharing, timeouts, customers who leave without paying, and the leader leaving mid-session.
 
 ### Releasing
 - Change the number in `VERSION` (e.g. `0.7.0`) and push to `main`. GitHub Actions runs the tests, creates the tag, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.

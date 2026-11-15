@@ -23,9 +23,12 @@ Domain\Queue.lua
 Domain\Advertise.lua
 Domain\ChatParser.lua
 Domain\Leads.lua
+Domain\Listings.lua
+Domain\Recruit.lua
 Domain\Advisor.lua
 UI\Widgets.lua
 UI\MainWindow.lua
 UI\SummonerPanel.lua
 UI\AdPanel.lua
+UI\FindCircle.lua
 Commands.lua

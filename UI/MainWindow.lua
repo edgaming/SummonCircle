@@ -4,10 +4,13 @@
 --   title + price
 --   status bar: OPEN / CLOSED + the leader's on/off toggle
 --   banner: what to do now + one big button
---   summoners (leader: gear opens the picker)
+--   summoners (leader: gear opens the picker, "Looking for summoners";
+--     applicants appear under the summoners while there are any)
 --   queue | requests (a switch; one list at a time, the queue by default)
 --   footer: earnings, Advertise (leader only; gear opens ad settings)
 --
+-- All of that is the "My Circle" page. Warlocks also get tabs along the
+-- bottom for other pages (Find a Circle), which register with UI.AddPage.
 -- Side panels (summoner picker, ad settings) live in their own files and
 -- register with UI.AddPanel.
 local ADDON, ns = ...
@@ -19,7 +22,7 @@ local c, GREY, GREEN, YELLOW, ORANGE, RED, PURPLE =
 local W = 460
 local ROWS = 8
 local ROW_H = 20
-local SUM_LINES = 5
+local SUM_LINES = 6
 
 local Y_STATUS = -34
 local STATUS_H = 30
@@ -32,13 +35,36 @@ local H = -Y_ROWS + ROWS * ROW_H + 58
 
 UI.W, UI.H = W, H
 
-local f, rows, reqRows, big, adBtn, adGear, sumGear
+local f, rows, reqRows, appRows, big, adBtn, adGear, sumGear
+local APP_ROWS = 2
 
 -- Which list is showing: "queue" or "requests". Never changes by itself.
 UI.view = "queue"
 
 function UI.ShowView(view)
   UI.view = view
+  UI.Refresh()
+end
+
+---------------------------------------------------------------------------
+-- Pages: "circle" (built here) plus pages from other files, each
+-- { key, label, Build(parent, height) -> frame, Refresh() }.
+-- Tabs only show for warlocks; everyone else only has My Circle.
+---------------------------------------------------------------------------
+UI.pages = {}
+UI.page = "circle"
+
+function UI.AddPage(page)
+  UI.pages[#UI.pages + 1] = page
+end
+
+function UI.HasTabs()
+  return select(2, UnitClass("player")) == "WARLOCK" and #UI.pages > 0
+end
+
+function UI.ShowPage(key)
+  UI.page = key
+  for _, p in ipairs(UI.panels) do if p.frame then p.frame:Hide() end end
   UI.Refresh()
 end
 
@@ -69,7 +95,7 @@ end
 -- Build
 ---------------------------------------------------------------------------
 local function buildRow(i)
-  local r = CreateFrame("Frame", nil, f)
+  local r = CreateFrame("Frame", nil, f.content)
   r:SetSize(W - 28, ROW_H)
   r:SetPoint("TOPLEFT", f, "TOPLEFT", 14, Y_ROWS - (i - 1) * ROW_H)
   r.num = Wd.Text(r); r.num:SetPoint("LEFT", 0, 0); r.num:SetWidth(16)
@@ -81,8 +107,22 @@ local function buildRow(i)
 end
 
 -- A summon request from chat: who, "what they said", how long ago, Whisper, ×.
+-- Someone who asked to join: name, where they are, shards, Invite, ×.
+local function buildApplicantRow()
+  local r = CreateFrame("Frame", nil, f.content)
+  r:SetSize(W - 44, 18)
+  r.text = Wd.Text(r, "GameFontHighlight"); r.text:SetPoint("LEFT", 0, 0); r.text:SetWidth(W - 160)
+  r.text:SetWordWrap(false)
+  r.close = Wd.Button(r, "×", 22, 18); r.close:SetPoint("RIGHT", 0, 0)
+  r.invite = Wd.Button(r, "Invite", 62, 18); r.invite:SetPoint("RIGHT", r.close, "LEFT", -2, 0)
+  r.invite:SetScript("OnClick", function() ns.Recruit.Invite(r.name) end)
+  r.close:SetScript("OnClick", function() ns.Recruit.Dismiss(r.name) end)
+  r:Hide()
+  return r
+end
+
 local function buildRequestRow(i)
-  local r = CreateFrame("Frame", nil, f)
+  local r = CreateFrame("Frame", nil, f.content)
   r:SetSize(W - 28, ROW_H)
   r:SetPoint("TOPLEFT", f, "TOPLEFT", 14, Y_ROWS - (i - 1) * ROW_H)
   r.name = Wd.Text(r); r.name:SetPoint("LEFT", 0, 0); r.name:SetWidth(108)
@@ -156,8 +196,13 @@ function UI.Build()
   f.priceText = Wd.Text(f, "GameFontHighlight", "RIGHT")
   f.priceText:SetPoint("TOPRIGHT", -36, -13)
 
+  -- Everything below the title belongs to the My Circle page.
+  local content = CreateFrame("Frame", nil, f)
+  content:SetAllPoints()
+  f.content = content
+
   -- Status bar: OPEN / CLOSED, colour-coded, with the one on/off toggle.
-  local status = CreateFrame("Frame", nil, f, "BackdropTemplate")
+  local status = CreateFrame("Frame", nil, content, "BackdropTemplate")
   status:SetPoint("TOPLEFT", 10, Y_STATUS)
   status:SetPoint("TOPRIGHT", -10, Y_STATUS)
   status:SetHeight(STATUS_H)
@@ -175,7 +220,7 @@ function UI.Build()
   end)
 
   -- Banner: what to do now + the big button
-  local banner = CreateFrame("Frame", nil, f, "BackdropTemplate")
+  local banner = CreateFrame("Frame", nil, content, "BackdropTemplate")
   f.banner = banner
   banner:SetPoint("TOPLEFT", 10, Y_BANNER)
   banner:SetPoint("TOPRIGHT", -10, Y_BANNER)
@@ -193,34 +238,46 @@ function UI.Build()
   f.alt:Hide()
 
   -- Summoners
-  Wd.Section(f, "Summoners", Y_SUM)
-  sumGear = Wd.Gear(f, function() UI.TogglePanel("summoners") end)
+  Wd.Section(content, "Summoners", Y_SUM)
+  sumGear = Wd.Gear(content, function() UI.TogglePanel("summoners") end)
   sumGear:SetPoint("TOPLEFT", 92, Y_SUM + 2)
   f.summoners = {}
   for i = 1, SUM_LINES do
-    local line = Wd.Text(f, "GameFontHighlight")
+    local line = Wd.Text(content, "GameFontHighlight")
     line:SetPoint("TOPLEFT", 22, Y_SUM - 18 - (i - 1) * 15)
     line:SetWidth(W - 44)
     f.summoners[i] = line
   end
+  -- Leader: "Looking for summoners (2/3)" lists the circle in Find a Circle.
+  f.recruit = Wd.Checkbox(content)
+  f.recruit:SetPoint("TOPLEFT", 112, Y_SUM + 5)
+  f.recruit.label:SetFontObject("GameFontHighlightSmall")
+  f.recruit.label:SetText("Looking for summoners")
+  f.recruit:SetScript("OnClick", function(self) ns.Recruit.SetRecruiting(self:GetChecked()) end)
+  f.appHeader = Wd.Text(content, "GameFontNormalSmall")
+  f.appHeader:SetText("WANTS TO JOIN")
+  appRows = {}
+  for i = 1, APP_ROWS do appRows[i] = buildApplicantRow() end
+  f.appMore = Wd.Text(content, "GameFontDisableSmall")
+  f.appRows = appRows -- handles for tests
 
   -- Queue | Requests switch
-  f.switch = Wd.Switch(f, 110, { "queue", "requests" }, UI.ShowView)
+  f.switch = Wd.Switch(content, 110, { "queue", "requests" }, UI.ShowView)
   f.switch:SetPoint("TOPLEFT", 6, Y_QUEUE + 4)
   f.queueTab, f.reqTab = f.switch.segments.queue.text, f.switch.segments.requests.text -- handles for tests
   rows, reqRows = {}, {}
   for i = 1, ROWS do rows[i] = buildRow(i) end
   for i = 1, ROWS do reqRows[i] = buildRequestRow(i) end
-  f.empty = Wd.Text(f, "GameFontDisable"); f.empty:SetPoint("TOPLEFT", 22, Y_ROWS - 2)
-  f.more = Wd.Text(f, "GameFontDisableSmall"); f.more:SetPoint("TOPLEFT", 22, Y_ROWS - ROWS * ROW_H - 2)
+  f.empty = Wd.Text(content, "GameFontDisable"); f.empty:SetPoint("TOPLEFT", 22, Y_ROWS - 2)
+  f.more = Wd.Text(content, "GameFontDisableSmall"); f.more:SetPoint("TOPLEFT", 22, Y_ROWS - ROWS * ROW_H - 2)
 
   -- Footer
-  adBtn = Wd.Button(f, "Advertise", 190, 24)
+  adBtn = Wd.Button(content, "Advertise", 190, 24)
   adBtn:SetPoint("BOTTOMRIGHT", -32, 12)
   adBtn:SetScript("OnClick", function() ns.Advertise.Post() end)
-  adGear = Wd.Gear(f, function() UI.TogglePanel("ad") end)
+  adGear = Wd.Gear(content, function() UI.TogglePanel("ad") end)
   adGear:SetPoint("LEFT", adBtn, "RIGHT", 6, 0)
-  f.earnings = Wd.Text(f, "GameFontHighlightSmall")
+  f.earnings = Wd.Text(content, "GameFontHighlightSmall")
   f.earnings:SetPoint("BOTTOMLEFT", 14, 12)
   f.earnings:SetPoint("RIGHT", adBtn, "LEFT", -10, 0)
   f.earnings:SetJustifyV("BOTTOM")
@@ -229,6 +286,27 @@ function UI.Build()
   f:SetShown(ns.db.ui.shown ~= false)
 
   for _, p in ipairs(UI.panels) do p.frame = p.Build(f, H) end
+
+  -- Pages and the tab bar (warlocks only).
+  f.tabs = {}
+  local tabs = { { key = "circle", label = "My Circle" } }
+  for _, page in ipairs(UI.pages) do
+    page.frame = page.Build(f, H)
+    page.frame:Hide()
+    tabs[#tabs + 1] = page
+  end
+  for i, t in ipairs(tabs) do
+    local tab = CreateFrame("Button", "SummonCircleFrameTab" .. i, f, "PanelTabButtonTemplate")
+    tab:SetID(i)
+    tab:SetText(t.label)
+    tab.key = t.key
+    if i == 1 then tab:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 12, 2)
+    else tab:SetPoint("LEFT", f.tabs[i - 1], "RIGHT", -14, 0) end
+    tab:SetScript("OnClick", function() UI.ShowPage(t.key) end)
+    if PanelTemplates_TabResize then pcall(PanelTemplates_TabResize, tab, 0) end
+    f.tabs[i] = tab
+  end
+  f.numTabs = #tabs
 end
 
 ---------------------------------------------------------------------------
@@ -323,6 +401,45 @@ local function refreshBanner()
   elseif a.label then
     f.bannerText:SetText(a.text .. "\n" .. c(GREY, "Available after combat."))
   end
+end
+
+-- Applicants go right under the last summoner line that's in use.
+local function refreshApplicants(usedLines, leader)
+  local apps = ns.Recruit.Applicants()
+  local y = Y_SUM - 18 - usedLines * 15 - 4
+  f.appHeader:SetShown(#apps > 0)
+  f.appHeader:ClearAllPoints()
+  f.appHeader:SetPoint("TOPLEFT", 22, y)
+  for i, r in ipairs(appRows) do
+    local a = apps[i]
+    if a then
+      r.name = a.name
+      r:ClearAllPoints()
+      r:SetPoint("TOPLEFT", f.content, "TOPLEFT", 30, y - 14 - (i - 1) * 19)
+      local shards = c(a.shards >= 20 and GREEN or a.shards >= 10 and YELLOW or ORANGE,
+        ("%d shard%s"):format(a.shards, a.shards == 1 and "" or "s"))
+      r.text:SetText(("%s   %s   %s%s"):format(ns.Short(a.name), c(GREY, a.zone or "?"), shards,
+        a.invited and ("   " .. c(GREY, "Invited...")) or ""))
+      -- Only the leader can act; the other summoners just see who's coming.
+      r.invite:SetShown(leader and not a.invited)
+      r.close:SetShown(leader)
+      r:Show()
+    else
+      r:Hide()
+    end
+  end
+  f.appMore:ClearAllPoints()
+  f.appMore:SetPoint("TOPLEFT", 30, y - 14 - APP_ROWS * 19)
+  f.appMore:SetText(#apps > APP_ROWS and ("+%d more"):format(#apps - APP_ROWS) or "")
+end
+
+local function refreshRecruit(leader, list)
+  local show = leader and ns.S ~= nil
+  f.recruit:SetShown(show)
+  if not show then return end
+  f.recruit:SetChecked(ns.Recruit.IsRecruiting())
+  local count = ("(%d/%d)"):format(#list, ns.Listings.WANTED)
+  f.recruit.hint:SetText(ns.Net.Available() and c(GREY, count) or c(GREY, count .. " network off"))
 end
 
 local function refreshSummoners(list, me)
@@ -428,12 +545,34 @@ local function refreshFooter(list, now, leader, active)
   end
 end
 
+local function refreshPages()
+  local tabs = UI.HasTabs()
+  if not tabs then UI.page = "circle" end
+  for i, tab in ipairs(f.tabs) do
+    tab:SetShown(tabs)
+    if tab.key == UI.page and PanelTemplates_SetTab then pcall(PanelTemplates_SetTab, f, i) end
+  end
+  for _, page in ipairs(UI.pages) do page.frame:SetShown(page.key == UI.page) end
+  f.content:SetShown(UI.page == "circle")
+  f.priceText:SetShown(UI.page == "circle")
+  if UI.page ~= "circle" then
+    -- The action button floats over the My Circle banner; take it away too.
+    if big and not InCombatLockdown() then big:Hide() end
+    for _, page in ipairs(UI.pages) do
+      if page.key == UI.page then page.Refresh() end
+    end
+    return false
+  end
+  return true
+end
+
 function UI.Refresh()
   if not f or not f:IsShown() or not ns.S then return end
   local me, now = ns.Me(), GetServerTime()
   local leader, active = ns.Roster.IsLeader(), ns.Session.IsActive()
 
   f.title:SetText("Summon Circle  " .. c(GREY, GetRealZoneText() or ""))
+  if not refreshPages() then return end
   f.priceText:SetText(c(GREY, "Price ") .. ns.Money(ns.S.price))
   refreshStatus(active, leader)
   refreshBanner()
@@ -441,6 +580,8 @@ function UI.Refresh()
   sumGear:SetShown(leader and IsInGroup())
   local list = ns.Session.ActiveSummoners()
   refreshSummoners(list, me)
+  refreshRecruit(leader, list)
+  refreshApplicants(math.max(#list, 1), leader)
   local queue, leads = ns.Queue.Sorted(), ns.Leads.Sorted()
   refreshTabs(#queue, ns.Leads.Count())
   if UI.view == "requests" then refreshRequests(now, leads) else refreshQueue(now, me, queue) end
