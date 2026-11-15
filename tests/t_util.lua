@@ -30,3 +30,8 @@ eq("ago: minutes", ns.Ago(1000, 1000 + 600), "just now")
 eq("ago: hours", ns.Ago(0, 3 * 3600 + 5), "3h ago")
 eq("ago: yesterday", ns.Ago(0, 86400 + 10), "yesterday")
 eq("ago: days", ns.Ago(0, 4 * 86400), "4 days ago")
+
+eq("coins: silver", ns.Coins(3000), "30|TInterface\\MoneyFrame\\UI-SilverIcon:0:0:2:0|t")
+eq("coins: gold and silver", ns.Coins(13500),
+  "1|TInterface\\MoneyFrame\\UI-GoldIcon:0:0:2:0|t 35|TInterface\\MoneyFrame\\UI-SilverIcon:0:0:2:0|t")
+eq("coins: zero", ns.Coins(0), "0|TInterface\\MoneyFrame\\UI-CopperIcon:0:0:2:0|t")

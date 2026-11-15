@@ -16,10 +16,11 @@ local page = UI.pages[1].frame
 local shown = {}
 for _, r in ipairs(page.rows) do if r:IsShown() then shown[#shown + 1] = r end end
 eq("demo circles: three rows", #shown, 3)
-check("demo circles: closest to full first", shown[1].top:GetText():find("Vex Shadow") == nil)
-check("demo circles: the 1-summoner circle last", shown[3].top:GetText():find("Vex Shadow") ~= nil)
-shown[1].btn:GetScript("OnClick")()
-eq("demo circles: Ask to join turns into Asked", shown[1].btn:GetText(), "Asked")
+check("demo circles: closest to full first", shown[1].name:GetText() ~= "Vex Shadow")
+check("demo circles: the 1-summoner circle last", shown[3].name:GetText() == "Vex Shadow")
+shown[1]:GetScript("OnClick")()
+page.ask:GetScript("OnClick")()
+eq("demo circles: Ask to join turns into Asked", page.ask:GetText(), "Asked")
 eq("demo circles: no whisper sent", #SENT, 0)
 
 -- Tabs: same size, one selected.

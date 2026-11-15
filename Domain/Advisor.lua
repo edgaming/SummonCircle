@@ -52,7 +52,7 @@ local function myCustomers(me, queue, price)
     if e.caster == me and e.status == "PAID" then
       local n = ns.Short(e.name)
       return {
-        text = ("%s paid %s. Send them off!"):format(n, ns.Money(e.paid)),
+        text = ("%s paid %s. Send them off!"):format(n, ns.Coins(e.paid)),
         label = "Kick " .. n,
         fn = function() Queue.Kick(e.name) end,
       }
@@ -71,7 +71,7 @@ local function myCustomers(me, queue, price)
         }
       end
       return {
-        text = ("%s arrived. Trade them for %s."):format(n, ns.Money(price)),
+        text = ("%s arrived. Trade them for %s."):format(n, ns.Coins(price)),
         label = "Trade " .. n,
         fn = function() Queue.Trade(e.name) end,
       }

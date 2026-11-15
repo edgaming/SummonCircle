@@ -84,7 +84,7 @@ function commands.reset()
 end
 
 function commands.stats()
-  ns.Print(("Lifetime: %s from %d summons."):format(ns.Money(ns.db.lifetime.copper), ns.db.lifetime.summons))
+  ns.Print(("Lifetime: %s from %d summons."):format(ns.Coins(ns.db.lifetime.copper), ns.db.lifetime.summons))
 end
 
 local function slash(input)

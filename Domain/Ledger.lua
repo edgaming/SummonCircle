@@ -59,6 +59,6 @@ ns.On("UI_INFO_MESSAGE", function(_, message)
   ns.db.lifetime.copper = ns.db.lifetime.copper + amount
   ns.db.lifetime.summons = ns.db.lifetime.summons + 1
   if amount < ns.S.price then
-    ns.Print(("%s underpaid: %s of %s."):format(ns.Short(name), ns.Money(amount), ns.Money(ns.S.price)))
+    ns.Print(("%s underpaid: %s of %s."):format(ns.Short(name), ns.Coins(amount), ns.Coins(ns.S.price)))
   end
 end)

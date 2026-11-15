@@ -23,6 +23,20 @@ function ns.Money(c)
   return table.concat(t)
 end
 
+-- 13500 -> "1 [gold] 35 [silver]" with the game's coin icons, for anything
+-- shown on screen. Chat text (ads, whispers) uses Money(): icons don't
+-- survive being sent.
+local COIN = "|TInterface\\MoneyFrame\\UI-%sIcon:0:0:2:0|t"
+function ns.Coins(c)
+  c = math.floor(c or 0)
+  local g, s, cc = math.floor(c / 10000), math.floor(c / 100) % 100, c % 100
+  local t = {}
+  if g > 0 then t[#t + 1] = g .. COIN:format("Gold") end
+  if s > 0 then t[#t + 1] = s .. COIN:format("Silver") end
+  if cc > 0 or #t == 0 then t[#t + 1] = cc .. COIN:format("Copper") end
+  return table.concat(t, " ")
+end
+
 -- "30s", "1g 20s", "50" (plain number = silver) -> copper, or nil
 function ns.ParseMoney(str)
   if not str then return nil end

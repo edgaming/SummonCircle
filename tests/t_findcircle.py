@@ -47,16 +47,25 @@ def main(check):
     check("listing: not open for customers yet", not l.open)
     check("listing: the circle doesn't see itself", rows(ash) == [] and rows(bram) == [])
     vex.ns.UI.Refresh()
-    top = vex.eval("SummonCircle.UI.pages[1].frame.rows[1].top:GetText()")
-    sub = vex.eval("SummonCircle.UI.pages[1].frame.rows[1].sub:GetText()")
-    check("row: where and who", "Undercity (UC)" in top and "Ash Lock" in top, top)
-    check("row: size, price, summons left", "2/3 summoners" in sub and "30s" in sub and "summons left" in sub, sub)
-    check("row: Ask to join", vex.eval("SummonCircle.UI.pages[1].frame.rows[1].btn:GetText()") == "Ask to join")
+    pg = "SummonCircle.UI.pages[1].frame"
+    row = pg + ".rows[1]"
+    check("row: who", vex.eval(row + ".name:GetText()") == "Ash Lock")
+    check("row: where", vex.eval(row + ".spot:GetText()") == "Undercity")
+    det = vex.eval(row + ".detail:GetText()")
+    check("row: price as coins, and the queue", "SilverIcon" in det and "waiting" in det, det)
+    check("row: two summoner slots filled, one open",
+          vex.eval(row + ".slots[2]:GetAlpha()") == 1 and vex.eval(row + ".slots[3]:GetAlpha()") < 1)
+    check("row: summons left", "summons left" in vex.eval(row + ".left:GetText()"))
+    check("ask: nothing picked yet, so the button is off", not vex.eval(pg + ".ask:IsEnabled()"))
+    check("ask: a hint says what to do", "Pick a circle" in vex.eval(pg + ".hint:GetText()"))
+    vex.eval(row + ":GetScript('OnClick')()")
+    check("pick: the row is highlighted", vex.eval(row + ".sel:IsShown()"))
+    check("pick: Ask to join is on", vex.eval(pg + ".ask:IsEnabled()") and vex.eval(pg + ".ask:GetText()") == "Ask to join")
     check("leader: the box shows 2/3", "(2/3)" in ash.eval("SummonCircleFrame.recruit.hint:GetText()"))
     check("leader only: Bram has no box", not bram.eval("SummonCircleFrame.recruit:IsShown()"))
 
     # --- Asking to join -------------------------------------------------------------
-    vex.ns.Recruit.Ask("Ash Lock")
+    vex.eval(pg + ".ask:GetScript('OnClick')()")
     w.tick(2)
     sent = [m for m in vex.sent("WHISPER") if m["target"] == "Ash Lock"]
     check("ask: friendly whisper to the leader",
@@ -75,6 +84,9 @@ def main(check):
     check("ask: other summoners see the row without buttons", bram.eval("SummonCircleFrame.appRows[1]:IsShown()")
           and not bram.eval("SummonCircleFrame.appRows[1].invite:IsShown()"))
     check("ask: Vex's row says Asked", vex.ns.Recruit.RowState("Ash Lock") == "asked")
+    vex.ns.UI.Refresh()
+    check("ask: the button says Asked and is off", vex.eval(pg + ".ask:GetText()") == "Asked"
+          and not vex.eval(pg + ".ask:IsEnabled()"))
     vex.ns.Recruit.Ask("Ash Lock")
     check("ask: can't ask again right away", len([m for m in vex.sent("WHISPER") if m["target"] == "Ash Lock"]) == 1)
     w.advance(2)

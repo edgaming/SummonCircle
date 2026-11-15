@@ -30,6 +30,8 @@ function FrameMT.GetAttribute(f, k) return f._attrs[k] end
 function FrameMT.RegisterEvent(f, e) f._events[e] = true; EVENTS[e] = EVENTS[e] or {}; table.insert(EVENTS[e], f) end
 function FrameMT.CreateFontString(f) return newFrame() end
 function FrameMT.CreateTexture(f) return newFrame() end
+function FrameMT.SetAlpha(f, a) f._alpha = a end
+function FrameMT.GetAlpha(f) return rawget(f, "_alpha") or 1 end
 -- Animations: groups record whether they're playing.
 function FrameMT.CreateAnimationGroup(f) local g = newFrame(); g._playing = false; return g end
 function FrameMT.CreateAnimation(g) return newFrame() end

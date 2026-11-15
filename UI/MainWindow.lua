@@ -321,7 +321,7 @@ local STATUS = {
     if waited > ns.db.unpaidTimeout then return c(RED, "unpaid, owes " .. ns.Short(e.caster)) end
     return c(YELLOW, ("owes %s %s"):format(ns.Short(e.caster), ns.Clock(waited)))
   end,
-  PAID = function(e) return c(GREEN, "paid " .. ns.Money(e.paid)) end,
+  PAID = function(e) return c(GREEN, "paid " .. ns.Coins(e.paid)) end,
 }
 
 local function refreshRow(r, i, e, now, me)
@@ -535,9 +535,9 @@ local function refreshFooter(list, now, leader, active)
   local earned, _, perHour = ns.Ledger.Summary(list, now)
   if #earned > 0 then
     local bits = {}
-    for _, e in ipairs(earned) do bits[#bits + 1] = ("%s %s"):format(ns.Short(e.name), ns.Money(e.copper)) end
+    for _, e in ipairs(earned) do bits[#bits + 1] = ("%s %s"):format(ns.Short(e.name), ns.Coins(e.copper)) end
     f.earnings:SetText(("Earned: %s\n%s"):format(table.concat(bits, ", "),
-      c(YELLOW, ns.Money(perHour) .. "/hr")))
+      ns.Coins(perHour) .. c(YELLOW, " per hour")))
   else
     f.earnings:SetText(c(GREY, "Earned: nothing yet"))
   end
@@ -571,7 +571,7 @@ function UI.Refresh()
 
   f.title:SetText("Summon Circle  " .. c(GREY, GetRealZoneText() or ""))
   if not refreshPages() then return end
-  f.priceText:SetText(c(GREY, "Price ") .. ns.Money(ns.S.price))
+  f.priceText:SetText(c(GREY, "Price ") .. ns.Coins(ns.S.price))
   refreshStatus(active, leader)
   refreshBanner()
 
