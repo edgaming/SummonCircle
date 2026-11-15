@@ -76,3 +76,13 @@ eq("demo clear: customers gone", n, 0)
 eq("demo clear: requests gone", #ns.Leads.Sorted(), 0)
 SlashCmdList.SUMMONCIRCLE("demo all")
 check("demo all: everything at once", #ns.Leads.Sorted() == 3 and #ns.Listings.Recruiting() == 3)
+
+-- Queue statuses: short, one line, "you" when it's about me.
+local S = ns.UI.STATUS
+local now = GetServerTime()
+local me = ns.Me()
+check("status: owes you", S.ARRIVED({ caster = me, arrivedAt = now - 117 }, now):find("owes you · 1:57") ~= nil)
+check("status: owes someone else", S.ARRIVED({ caster = "Bram Lock", arrivedAt = now - 10 }, now):find("owes Bram Lock · 0:10") ~= nil)
+check("status: unpaid", S.ARRIVED({ caster = "Bram Lock", arrivedAt = now - 999 }, now):find("unpaid · owes Bram Lock") ~= nil)
+check("status: I'm summoning", S.SUMMONING({ caster = me, castAt = now - 5 }, now):find("you're summoning · 0:05") ~= nil)
+check("status: someone summoning", S.SUMMONING({ caster = "Bram Lock", castAt = now - 97 }, now):find("Bram Lock summoning · 1:37") ~= nil)

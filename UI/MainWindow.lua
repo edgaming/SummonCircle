@@ -97,15 +97,20 @@ end
 ---------------------------------------------------------------------------
 -- Build
 ---------------------------------------------------------------------------
+local STATUS_W, STATUS_W_BTN = 200, 132
+
 local function buildRow(i)
   local r = CreateFrame("Frame", nil, f.content)
   r:SetSize(W - 28, ROW_H)
   r:SetPoint("TOPLEFT", f, "TOPLEFT", 14, Y_ROWS - (i - 1) * ROW_H)
   r.num = Wd.Text(r); r.num:SetPoint("LEFT", 0, 0); r.num:SetWidth(16)
   r.name = Wd.Text(r); r.name:SetPoint("LEFT", 18, 0); r.name:SetWidth(110)
-  r.zone = Wd.Text(r); r.zone:SetPoint("LEFT", 130, 0); r.zone:SetWidth(120)
-  r.status = Wd.Text(r); r.status:SetPoint("LEFT", 252, 0); r.status:SetWidth(120)
-  r.btn = Wd.Button(r, "", 58, 18); r.btn:SetPoint("RIGHT", 0, 0)
+  r.zone = Wd.Text(r); r.zone:SetPoint("LEFT", 130, 0); r.zone:SetWidth(96)
+  r.zone:SetWordWrap(false)
+  -- Statuses always fit on one line; they get the button's room when there's no button.
+  r.status = Wd.Text(r); r.status:SetPoint("LEFT", 230, 0); r.status:SetWidth(STATUS_W)
+  r.status:SetWordWrap(false)
+  r.btn = Wd.Button(r, "", 66, 18); r.btn:SetPoint("RIGHT", 0, 0)
   return r
 end
 
@@ -331,19 +336,27 @@ end
 ---------------------------------------------------------------------------
 -- Refresh
 ---------------------------------------------------------------------------
+-- One short line per stage. "you" when it's about me.
+local function who(name)
+  return name == ns.Me() and "you" or ns.Short(name)
+end
+
 local STATUS = {
   INVITED = function() return c(GREY, "invited") end,
   GROUP = function() return "waiting" end,
   SUMMONING = function(e, now)
-    return c(PURPLE, ("%s summoning %s"):format(ns.Short(e.caster), ns.Clock(now - (e.castAt or now))))
+    local t = ns.Clock(now - (e.castAt or now))
+    if e.caster == ns.Me() then return c(PURPLE, "you're summoning · " .. t) end
+    return c(PURPLE, ("%s summoning · %s"):format(ns.Short(e.caster), t))
   end,
   ARRIVED = function(e, now)
     local waited = now - (e.arrivedAt or now)
-    if waited > ns.db.unpaidTimeout then return c(RED, "unpaid, owes " .. ns.Short(e.caster)) end
-    return c(YELLOW, ("owes %s %s"):format(ns.Short(e.caster), ns.Clock(waited)))
+    if waited > ns.db.unpaidTimeout then return c(RED, "unpaid · owes " .. who(e.caster)) end
+    return c(YELLOW, ("owes %s · %s"):format(who(e.caster), ns.Clock(waited)))
   end,
   PAID = function(e) return c(GREEN, "paid " .. ns.Coins(e.paid)) end,
 }
+UI.STATUS = STATUS -- for tests
 
 local function refreshRow(r, i, e, now, me)
   local ro = ns.Roster.members[e.name]
@@ -368,6 +381,7 @@ local function refreshRow(r, i, e, now, me)
   else
     r.btn:Hide()
   end
+  r.status:SetWidth(label and STATUS_W_BTN or STATUS_W)
   r:Show()
 end
 
