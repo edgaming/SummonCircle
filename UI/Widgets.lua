@@ -118,10 +118,17 @@ function Widgets.WindowTab(parent, name, label, onClick)
   t.glow = Style.Glow(t, "selected", "ARTWORK")
   t.glow:SetPoint("TOPLEFT", 8, -4)
   t.glow:SetPoint("BOTTOMRIGHT", -8, 6)
+  -- The template gives its label a fixed width that's too narrow for our
+  -- names ("Find a Ci..."); let it use the whole tab.
   local fs = t:GetFontString()
   if fs then
     fs:ClearAllPoints()
-    fs:SetPoint("CENTER", 0, 2)
+    fs:SetPoint("LEFT", 10, 2)
+    fs:SetPoint("RIGHT", -10, 2)
+    fs:SetWidth(135 - 20)
+    fs:SetJustifyH("CENTER")
+    fs:SetWordWrap(false)
+    if fs.SetMaxLines then fs:SetMaxLines(1) end
   end
   function t:SetSelected(on)
     if self.selected == on then return end
