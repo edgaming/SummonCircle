@@ -84,8 +84,8 @@ local function blacklistHit(S)
   if not (hit and GetTime() - hit.at < BL_HIT_WINDOW and not S.queue[hit.name]) then return end
   local n = ns.Short(hit.name)
   return {
-    text = ("%s whispered, but they're blacklisted: %s, %s (by %s). Not invited."):format(
-      n, hit.entry.reason or "no reason", ns.Ago(hit.entry.at, GetServerTime()), ns.Short(hit.entry.by)),
+    text = ("%s whispered, but they're blacklisted: %s, %s (%s). Not invited."):format(
+      n, hit.entry.reason or "no reason", ns.Ago(hit.entry.at, GetServerTime()), Blacklist.Source(hit.entry)),
     label = "Invite anyway",
     fn = function() Queue.InviteAnyway(hit.name) end,
     alt = { label = "Ignore", fn = function() Blacklist.ClearHit() end },

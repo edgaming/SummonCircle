@@ -9,7 +9,7 @@ local HELP = {
   "/sc sound on|off - quiet sound for new summon requests from chat",
   "/sc reset - reset the session earnings",
   "/sc stats - lifetime earnings",
-  "/sc net - network test (see /sc net help)",
+  "/sc net - is the network working?",
 }
 
 local commands = {}
@@ -43,7 +43,7 @@ function commands.bl(rest)
     local any = false
     ns.Blacklist.Each(function(n, e)
       any = true
-      ns.Print(("%s - %s (by %s)"):format(n, e.reason or "no reason", ns.Short(e.by)))
+      ns.Print(("%s - %s (%s)"):format(n, e.reason or "no reason", ns.Blacklist.Source(e)))
     end)
     if not any then ns.Print("Blacklist is empty.") end
   end
@@ -73,7 +73,7 @@ function commands.sound(rest)
   ns.Print("Sound for new requests: " .. (ns.db.requestSound and "on" or "off"))
 end
 
-function commands.net(rest) ns.NetSpike.Command(rest) end
+function commands.net() ns.Print(ns.Net.Describe()) end
 
 function commands.reset()
   ns.Sync.Do("RESET", {})

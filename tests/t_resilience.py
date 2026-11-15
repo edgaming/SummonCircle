@@ -35,13 +35,13 @@ def main(check):
     check("privacy: the customer isn't treated as a summoner",
           not any(p.ns.Session.IsSummoner("Dana Mage") for p in summoners))
 
-    # Customers can't push blacklist entries or ops.
-    dana.ns.Blacklist.Set("Ash Lock", "griefing")  # sends only to her (empty) summoner list
+    # Customers can't push blacklist lists or ops through the group.
+    # (Network entries are accepted from anyone by design: see t_netblacklist.py.)
     dana.ns.Transport.Send(dana.L.eval('{ t = "BL", list = { ["Cole Lock"] = { by = "Dana Mage", at = 9e9, reason = "x" } } }'))
     dana.ns.Transport.Send(dana.L.eval('{ t = "OP", m = { op = "REMOVE", name = "Finn Moss", at = 1 } }'))
     w.tick(3)
-    check("privacy: a customer's blacklist entry is ignored",
-          not any(p.ns.Blacklist.Get("Cole Lock") or p.ns.Blacklist.Get("Ash Lock") for p in summoners))
+    check("privacy: a customer's blacklist list is ignored in the group",
+          not any(p.ns.Blacklist.Get("Cole Lock") for p in summoners))
     check("privacy: a customer's op is ignored", all("Finn Moss" in p.queue() for p in summoners))
 
     # --- Blacklist spreads between summoners ------------------------------

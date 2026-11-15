@@ -14,7 +14,7 @@ A WoW Forever addon for warlocks who run a summoning service together. One share
 - **Portal alerts:** when another summoner opens a portal, you get an on-screen warning and a sound telling you to click it.
 - **Payment tracking:** trades are detected automatically. Earnings are tracked per summoner, along with gold per hour.
 - **Non-payment handling:** customers who don't pay within 3 minutes are flagged. You can kick them or kick and blacklist them, and anyone who leaves without paying can be blacklisted in one click.
-- **Shared blacklist:** blacklisted players aren't invited when they whisper. Blacklists merge between summoners whenever they group up.
+- **Shared blacklist:** blacklisted players aren't invited when they whisper. Every add or removal reaches every Summon Circle user on your faction within seconds, grouped or not, and full lists merge between summoners whenever they group up, so anyone who was offline catches up. Each entry shows who added it.
 
 ### For the group leader
 - **Open for business / Close shop:** the addon does nothing until you open. It never interferes with questing groups or dungeons, and it closes itself when you log out or leave the group.
@@ -45,7 +45,7 @@ Type `/sc` to open the window.
 Read the purple box and press the big button under it.
 
 ## Commands
-`/sc` (or `/summoncircle`) toggles the window. `/sc help` lists the rest: whisper triggers, the thanks message, a sound for new requests (`/sc sound on`), blacklist management (`/sc bl add First Last [reason]`, `/sc bl del First Last`, `/sc bl list`), earnings reset and lifetime stats. `/sc net` is a temporary network test (see `/sc net help`).
+`/sc` (or `/summoncircle`) toggles the window. `/sc help` lists the rest: whisper triggers, the thanks message, a sound for new requests (`/sc sound on`), blacklist management (`/sc bl add First Last [reason]`, `/sc bl del First Last`, `/sc bl list`), earnings reset and lifetime stats. `/sc net` says whether the network is working.
 
 ## Known limitations
 - Customers inside a dungeon or battleground aren't flagged yet. A summon to them just times out and they go back into the queue.
@@ -57,7 +57,7 @@ The `.toc` loads the files in this order. Each layer only uses the ones above it
 | Folder | What's there |
 |---|---|
 | `Core/` | Namespace, settings, event dispatch and the internal event bus (`Core.lua`); pure helpers like money and names (`Util.lua`); the thin layer over WoW's API (`Game.lua`); cities and their nicknames (`Locations.lua`). |
-| `Net/` | The wire format (`Protocol.lua`); sending and receiving addon messages (`Transport.lua`); who's in the group and who runs the addon (`Roster.lua`). |
+| `Net/` | The wire format (`Protocol.lua`); sending and receiving addon messages (`Transport.lua`); the faction-wide network channel (`Channel.lua`); who's in the group and who runs the addon (`Roster.lua`). |
 | `Domain/` | The circle itself: shared state and sync (`Sync.lua`), open/close and summoners (`Session.lua`), turn order (`Rotation.lua`), earnings (`Ledger.lua`), `Blacklist.lua`, customers (`Queue.lua`), `Advertise.lua`, reading chat for requests (`ChatParser.lua` decides what counts, `Leads.lua` keeps the list), and "what do I do now" (`Advisor.lua`). |
 | `UI/` | Widget helpers, the main window, and one file per side panel. |
 | `Commands.lua` | Slash commands. |
@@ -71,7 +71,7 @@ A few rules keep it modular:
 ### Tests
 `pip install lupa`, then `python tests/run.py`. The tests also run on GitHub for every push.
 - `tests/t_*.lua` load the addon in a fake WoW environment (`tests/wowmock.lua`) as one player. The unit tests (`t_util`, `t_protocol`, `t_transport`, `t_locations`) live here too, plus `t_chatparser`, which runs every line in `tests/chat_lines.txt`. When a chat line is misread in game, add it to that file.
-- `tests/t_*.py` are multi-player scenarios. `tests/harness.py` runs a separate copy of the addon for each player in one group and routes addon messages between them the way the game does (group messages to everyone else, addon whispers to one player, realm suffix on sender names). `t_circle.py` runs a full circle from picking summoners to payment. `t_requests.py` covers summon requests from chat across the circle. `t_resilience.py` covers privacy from customers with the addon, blacklist sharing, timeouts, customers who leave without paying, and the leader leaving mid-session.
+- `tests/t_*.py` are multi-player scenarios. `tests/harness.py` runs a separate copy of the addon for each player in one group and routes addon messages between them the way the game does (group messages to everyone else, addon whispers to one player, realm suffix on sender names). `t_circle.py` runs a full circle from picking summoners to payment. `t_requests.py` covers summon requests from chat across the circle. `t_netblacklist.py` covers blacklist entries spreading over the faction network. `t_resilience.py` covers privacy from customers with the addon, blacklist sharing, timeouts, customers who leave without paying, and the leader leaving mid-session.
 
 ### Releasing
 - Change the number in `VERSION` (e.g. `0.7.0`) and push to `main`. GitHub Actions runs the tests, creates the tag, packages the addon with the BigWigs packager, and publishes a release. WowUp offers the update to anyone who installed from the repo URL.

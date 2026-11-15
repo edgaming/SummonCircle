@@ -12,8 +12,8 @@ Core\Game.lua
 Core\Locations.lua
 Net\Protocol.lua
 Net\Transport.lua
+Net\Channel.lua
 Net\Roster.lua
-Net\NetSpike.lua
 Domain\Sync.lua
 Domain\Session.lua
 Domain\Rotation.lua
