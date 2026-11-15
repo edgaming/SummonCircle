@@ -51,6 +51,7 @@ end
 -- hovering lights a label up. Switch(parent, segmentWidth, { "a", "b" }, onSelect)
 --   sw:SetActive("a")            underline that label
 --   sw:SetLabel("b", text)       set a label's text (colour it with c())
+--   sw:SetPulse("b", true)       a soft glow breathes behind that label
 --   sw.segments.a.text           the label's font string
 function Widgets.Switch(parent, segWidth, keys, onSelect)
   local sw = CreateFrame("Frame", nil, parent)
@@ -68,11 +69,34 @@ function Widgets.Switch(parent, segWidth, keys, onSelect)
     seg.underline:SetSize(segWidth - 20, 2)
     seg.underline:SetPoint("BOTTOM", 0, 0)
     seg.underline:Hide()
+    -- "Something new here": a soft glow that breathes in and out.
+    seg.glow = seg:CreateTexture(nil, "BACKGROUND")
+    seg.glow:SetTexture("Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64")
+    seg.glow:SetBlendMode("ADD")
+    seg.glow:SetVertexColor(1, 0.82, 0, 1)
+    seg.glow:SetSize(segWidth + 10, 34)
+    seg.glow:SetPoint("CENTER", 0, 1)
+    seg.glow:Hide()
+    seg.pulse = seg.glow:CreateAnimationGroup()
+    seg.pulse:SetLooping("BOUNCE")
+    local fade = seg.pulse:CreateAnimation("Alpha")
+    fade:SetFromAlpha(0.15)
+    fade:SetToAlpha(0.9)
+    fade:SetDuration(0.9)
+    fade:SetSmoothing("IN_OUT")
     seg:SetScript("OnClick", function() onSelect(key) end)
     sw.segments[key] = seg
   end
   function sw:SetActive(active)
     for key, seg in pairs(self.segments) do seg.underline:SetShown(key == active) end
+  end
+  function sw:SetPulse(key, on)
+    local seg = self.segments[key]
+    if on and not seg.pulse:IsPlaying() then
+      seg.glow:Show(); seg.pulse:Play()
+    elseif not on and seg.pulse:IsPlaying() then
+      seg.pulse:Stop(); seg.glow:Hide()
+    end
   end
   function sw:SetLabel(key, text)
     self.segments[key].text:SetText(text)

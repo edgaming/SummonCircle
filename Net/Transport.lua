@@ -65,8 +65,12 @@ ns.On("ADDON_LOADED", function(name)
   if name == ADDON then C_ChatInfo.RegisterAddonMessagePrefix(ns.PREFIX) end
 end)
 
-ns.On("CHAT_MSG_ADDON", function(prefix, text, _, sender)
-  if prefix ~= ns.PREFIX or ns.IsSecret(text) or ns.IsSecret(sender) then return end
+-- Group traffic only arrives through the group or an addon whisper. Anything
+-- on our prefix from a public channel is someone else's, and is dropped.
+local ROUTES = { PARTY = true, RAID = true, INSTANCE_CHAT = true, WHISPER = true }
+
+ns.On("CHAT_MSG_ADDON", function(prefix, text, route, sender)
+  if prefix ~= ns.PREFIX or not ROUTES[route] or ns.IsSecret(text) or ns.IsSecret(sender) then return end
   sender = ns.Full(sender)
   if sender == ns.Me() then return end
   local data = assembler:Feed(sender, text, GetTime())

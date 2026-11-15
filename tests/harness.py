@@ -59,11 +59,12 @@ def lua_list(t):
 class Player:
     """One player running the addon in their own Lua runtime."""
 
-    def __init__(self, world, name, cls):
-        self.world, self.name, self.cls = world, name, cls
+    def __init__(self, world, name, cls, faction="Horde"):
+        self.world, self.name, self.cls, self.faction = world, name, cls, faction
         self.L = new_runtime(name)
         self.g = self.L.globals()
         self.g.PLAYER_CLASS = cls
+        self.g.PLAYER_FACTION = faction
         self.sent_cursor = 0
         self.msg_cursor = 0
 
@@ -91,6 +92,11 @@ class Player:
     def leads(self):
         """{ name: lead } of this player's open requests (not whispered by someone else)."""
         return {k: v for k, v in self.ns.Leads.list.items() if v.claimedBy is None}
+
+    def slash(self, line):
+        """Type a /sc command."""
+        self.g.SlashCmdList.SUMMONCIRCLE(line)
+        self.world.sync()
 
     def chat(self):
         return list(self.g.CHAT.values())
@@ -153,6 +159,7 @@ class World:
         self.members = []   # [{ name, leader, assist, class, zone }]
         self.raid = False
         self.players = {}   # name -> Player (only people running the addon)
+        self.channels_shared = True  # do custom chat channels reach the other faction?
 
     # --- roster -----------------------------------------------------------
     def member(self, name):
@@ -163,9 +170,9 @@ class World:
     def in_group(self, name):
         return self.member(name) is not None and len(self.members) > 1
 
-    def add(self, name, cls="WARLOCK", leader=False, zone="Undercity", join=True):
-        """A player running the addon logs in (and joins the group)."""
-        p = Player(self, name, cls)
+    def add(self, name, cls="WARLOCK", leader=False, zone="Undercity", join=True, faction="Horde"):
+        """A player running the addon logs in (and joins the group, unless join=False)."""
+        p = Player(self, name, cls, faction)
         self.players[name] = p
         if join:
             self.members.append(dict(name=name, leader=leader, assist=False, cls=cls, zone=zone))
@@ -238,19 +245,31 @@ class World:
 
     # --- message routing ----------------------------------------------------
     def deliver(self):
+        """Route every new addon message the way the game does:
+        PARTY/RAID to everyone else in the group, WHISPER to one player of the
+        same faction (grouped or not), CHANNEL to everyone in that chat channel."""
         moved = False
         for name, p in list(self.players.items()):
             msgs = list(p.g.ADDON_MSGS.values())
             new, p.msg_cursor = msgs[p.msg_cursor:], len(msgs)
             for m in new:
-                if not self.in_group(name):
-                    continue
+                prefix = m.prefix or "SUMMONCIRCLE"
+                extra = ()
                 if m.chatType == "WHISPER":
-                    to = [m.target] if m.target in self.players and self.in_group(m.target) else []
+                    q = self.players.get(m.target)
+                    to = [m.target] if q and q.faction == p.faction else []
+                elif m.chatType == "CHANNEL":
+                    chan = p.g.JOINED[m.target]
+                    to = [n for n, q in self.players.items()
+                          if n != name and chan in list(q.g.JOINED.values())
+                          and (self.channels_shared or q.faction == p.faction)]
+                    extra = ("", 0, m.target, chan)
                 else:
+                    if not self.in_group(name):
+                        continue
                     to = [n for n in self.players if n != name and self.in_group(n)]
                 for n in to:
-                    self.players[n].fire("CHAT_MSG_ADDON", "SUMMONCIRCLE", m.text, m.chatType, name + REALM)
+                    self.players[n].fire("CHAT_MSG_ADDON", prefix, m.text, m.chatType, name + REALM, *extra)
                     moved = True
         return moved
 

@@ -81,6 +81,9 @@ function Roster.SendHeartbeat()
 end
 
 local function onPresence(sender, msg)
+  -- Only group members count as peers (an addon whisper can come from anyone).
+  if not Roster.members[sender] then Roster.Scan() end
+  if not Roster.members[sender] then return end
   local isNew = Roster.peers[sender] == nil
   Roster.peers[sender] = { shards = msg.shards or 0, afk = msg.afk, seen = GetTime() }
   ns.Emit("PEER_SEEN", sender, msg.t == "HELLO", isNew)

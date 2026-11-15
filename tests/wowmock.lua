@@ -30,6 +30,12 @@ function FrameMT.GetAttribute(f, k) return f._attrs[k] end
 function FrameMT.RegisterEvent(f, e) f._events[e] = true; EVENTS[e] = EVENTS[e] or {}; table.insert(EVENTS[e], f) end
 function FrameMT.CreateFontString(f) return newFrame() end
 function FrameMT.CreateTexture(f) return newFrame() end
+-- Animations: groups record whether they're playing.
+function FrameMT.CreateAnimationGroup(f) local g = newFrame(); g._playing = false; return g end
+function FrameMT.CreateAnimation(g) return newFrame() end
+function FrameMT.Play(g) g._playing = true end
+function FrameMT.Stop(g) g._playing = false end
+function FrameMT.IsPlaying(g) return rawget(g, "_playing") == true end
 function FrameMT.GetPoint() return "CENTER", nil, "CENTER", 0, 0 end
 function FrameMT.HasFocus() return false end
 function FrameMT.GetChecked(f) return f._checked end
@@ -131,7 +137,37 @@ function GetTime() return 1000 + (os.clock() - t0) + CLOCK_OFFSET end
 COMBAT = false
 function InCombatLockdown() return COMBAT end
 function GetCVarBool() return true end
-function GetChannelList() return 1, "General - Undercity", false, 2, "Trade - City", false end
+-- Chat channels: General and Trade, plus any custom channels joined.
+JOINED = {}            -- [index] = name of custom channels
+HIDDEN_CHANNELS = {}   -- [name] = true once removed from a chat window
+CHANNEL_JOIN_OK = true -- set false to simulate a failed join
+function GetChannelList()
+  local t = { 1, "General - Undercity", false, 2, "Trade - City", false }
+  for i = 3, 10 do
+    if JOINED[i] then t[#t + 1] = i; t[#t + 1] = JOINED[i]; t[#t + 1] = false end
+  end
+  return unpack(t)
+end
+function GetChannelName(name)
+  for i, n in pairs(JOINED) do
+    if n == name or i == name then return i, n end
+  end
+  return 0
+end
+function JoinTemporaryChannel(name)
+  if not CHANNEL_JOIN_OK then return end
+  for _, n in pairs(JOINED) do if n == name then return end end
+  for i = 3, 10 do
+    if not JOINED[i] then JOINED[i] = name; return end
+  end
+end
+function LeaveChannelByName(name)
+  for i, n in pairs(JOINED) do if n == name then JOINED[i] = nil end end
+end
+NUM_CHAT_WINDOWS = 1
+function ChatFrame_RemoveChannel(frame, name) HIDDEN_CHANNELS[name] = true end
+PLAYER_FACTION = "Horde"
+function UnitFactionGroup(unit) return PLAYER_FACTION, PLAYER_FACTION end
 function IsInGroupCat() end
 function wipe(t) for k in pairs(t) do t[k] = nil end return t end
 function geterrorhandler() return function(e) table.insert(ERRORS, tostring(e)) end end
@@ -182,7 +218,11 @@ C_EncodingUtil = {
 ADDON_MSGS = {}
 C_ChatInfo = {
   RegisterAddonMessagePrefix = noop,
-  SendAddonMessage = function(prefix, text, chatType, target) ADDON_MSGS[#ADDON_MSGS+1] = { text = text, chatType = chatType, target = target } return 0 end,
+  SendAddonMessage = function(prefix, text, chatType, target)
+    if chatType == "CHANNEL" and not JOINED[target] then return 5 end -- not in that channel
+    ADDON_MSGS[#ADDON_MSGS+1] = { prefix = prefix, text = text, chatType = chatType, target = target }
+    return 0
+  end,
 }
 PLAYER_CLASS = "WARLOCK"
 function UnitClass(u)
@@ -205,3 +245,4 @@ function Boot()
   FireEvent("ADDON_LOADED", "SummonCircle")
   FireEvent("PLAYER_LOGIN")
 end
+ChatFrame1 = CreateFrame("Frame")

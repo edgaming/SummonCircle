@@ -363,8 +363,10 @@ local function refreshTabs(nQueue, nReq)
   f.switch:SetActive(UI.view)
   f.switch:SetLabel("queue", c(q and "ffffff" or GREY, ("QUEUE (%d)"):format(nQueue)))
   -- A new request only lights up the label; it never switches the view.
-  local reqCol = r and "ffffff" or (ns.Leads.HasUnseen() and YELLOW or GREY)
+  local unseen = not r and ns.Leads.HasUnseen()
+  local reqCol = r and "ffffff" or (unseen and YELLOW or GREY)
   f.switch:SetLabel("requests", c(reqCol, ("REQUESTS (%d)"):format(nReq)))
+  f.switch:SetPulse("requests", unseen)
 end
 
 local function refreshQueue(now, me, queue)

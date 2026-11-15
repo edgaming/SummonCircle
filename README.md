@@ -45,7 +45,7 @@ Type `/sc` to open the window.
 Read the purple box and press the big button under it.
 
 ## Commands
-`/sc` (or `/summoncircle`) toggles the window. `/sc help` lists the rest: whisper triggers, the thanks message, a sound for new requests (`/sc sound on`), blacklist management (`/sc bl add First Last [reason]`, `/sc bl del First Last`, `/sc bl list`), earnings reset and lifetime stats.
+`/sc` (or `/summoncircle`) toggles the window. `/sc help` lists the rest: whisper triggers, the thanks message, a sound for new requests (`/sc sound on`), blacklist management (`/sc bl add First Last [reason]`, `/sc bl del First Last`, `/sc bl list`), earnings reset and lifetime stats. `/sc net` is a temporary network test (see `/sc net help`).
 
 ## Known limitations
 - Customers inside a dungeon or battleground aren't flagged yet. A summon to them just times out and they go back into the queue.

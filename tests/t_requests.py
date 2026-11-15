@@ -37,6 +37,8 @@ def main(check):
     check("open: the view doesn't switch by itself", all(p.ns.UI.view == "queue" for p in circle))
     tab = ash.g.SummonCircleFrame.reqTab.GetText(ash.g.SummonCircleFrame.reqTab)
     check("open: the Requests label lights up", "REQUESTS (1)" in tab and "ffd100" in tab, tab)
+    glow = ash.g.SummonCircleFrame.switch.segments.requests.pulse
+    check("open: the Requests label glows", glow.IsPlaying(glow))
     check("open: the banner is untouched", ash.banner() == ash.ns.Advisor.NextAction().text and "request" not in ash.banner().lower())
 
     say("WTB UC summon 20s pls??", "Gorak Stone")
@@ -64,11 +66,13 @@ def main(check):
     ash.ns.UI.ShowView("requests")
     f = ash.g.SummonCircleFrame
     check("view: label no longer highlighted", "ffd100" not in f.reqTab.GetText(f.reqTab))
+    check("view: the glow stops once you look", not glow.IsPlaying(glow))
     ash.ns.UI.ShowView("queue")
     check("view: still not highlighted after looking", "ffd100" not in f.reqTab.GetText(f.reqTab))
     w.advance(2)
     say(LINE, "Ivy Lane")
     check("view: a newer request lights it up again", "ffd100" in f.reqTab.GetText(f.reqTab))
+    check("view: and glows again", glow.IsPlaying(glow))
 
     # --- Whisper: one whisper for the whole circle ------------------------------
     bram.ns.Leads.Whisper("Gorak Stone")

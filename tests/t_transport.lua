@@ -71,3 +71,13 @@ ADDON_MSGS = {}
 T.Send({ t = "TEST" })
 RunTimers(1)
 eq("solo: nothing sent", #ADDON_MSGS, 0)
+
+-- Only group routes are accepted on our prefix.
+GROUP = { { name = "Ash Lock", leader = true }, { name = "Bram Lock" } }
+local before = #got
+FireEvent("CHAT_MSG_ADDON", ns.PREFIX, P.Frames(P.Encode({ t = "TEST" }), 50)[1], "CHANNEL", "Zed Stranger")
+eq("route: public channel ignored", #got, before)
+FireEvent("CHAT_MSG_ADDON", ns.PREFIX, P.Frames(P.Encode({ t = "TEST" }), 51)[1], "WHISPER", "Bram Lock")
+eq("route: addon whisper accepted", #got, before + 1)
+FireEvent("CHAT_MSG_ADDON", ns.PREFIX, P.Frames(P.Encode({ t = "HELLO", shards = 3 }), 52)[1], "WHISPER", "Zed Stranger")
+check("presence: a stranger isn't a peer", ns.Roster.peers["Zed Stranger"] == nil)

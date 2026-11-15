@@ -9,6 +9,7 @@ local HELP = {
   "/sc sound on|off - quiet sound for new summon requests from chat",
   "/sc reset - reset the session earnings",
   "/sc stats - lifetime earnings",
+  "/sc net - network test (see /sc net help)",
 }
 
 local commands = {}
@@ -71,6 +72,8 @@ function commands.sound(rest)
   if rest == "on" or rest == "off" then ns.db.requestSound = rest == "on" end
   ns.Print("Sound for new requests: " .. (ns.db.requestSound and "on" or "off"))
 end
+
+function commands.net(rest) ns.NetSpike.Command(rest) end
 
 function commands.reset()
   ns.Sync.Do("RESET", {})
