@@ -59,12 +59,19 @@ end
 -- Actions
 ---------------------------------------------------------------------------
 function Queue.Trade(name)
+  local e = ns.S.queue[name]
+  if e and e.demo then return ns.Print("(demo) This would open a trade with " .. name .. ".") end
   local r = Roster.members[name]
   if r then InitiateTrade(r.unit) end
 end
 
 -- blacklist: also blacklist them. silent: no "Thanks" whisper.
 function Queue.Kick(name, blacklist, silent)
+  local e = ns.S.queue[name]
+  if e and e.demo then -- made-up customer (/sc demo): just take them off the list
+    ns.S.queue[name] = nil
+    return ns.Update()
+  end
   if blacklist then
     Blacklist.Set(name, "didn't pay " .. ns.Short(ns.Me()))
   elseif not silent and ns.db.thanks ~= "" then
@@ -79,6 +86,8 @@ function Queue.Kick(name, blacklist, silent)
 end
 
 function Queue.Reinvite(name)
+  local e = ns.S.queue[name]
+  if e and e.demo then return end
   if Roster.CanInvite() then ns.API.Invite(name) end
 end
 
@@ -194,28 +203,30 @@ Sync.OnTick(20, function()
   local myZone = GetRealZoneText()
   local leavers = {}
   for name, e in pairs(S.queue) do
-    local r = Roster.members[name]
-    if e.status == "INVITED" then
-      if r then
-        e.status = "GROUP"; changed = true
-      elseif now - (e.added or now) > INVITE_TIMEOUT then
-        S.queue[name] = nil; changed = true -- declined / ignored the invite
-      end
-    elseif not r then
-      if e.status == "ARRIVED" and e.caster then
-        leavers[#leavers + 1] = { name = name, caster = e.caster }
-      else
-        S.queue[name] = nil; changed = true
-      end
-    elseif e.status == "SUMMONING" then
-      if r.zone and r.zone == myZone then
-        e.status, e.arrivedAt = "ARRIVED", now; changed = true
-      elseif now - (e.castAt or now) > ns.db.summonTimeout then
-        if e.caster then
-          local L = ns.Ledger.Get(e.caster)
-          L.failed = L.failed + 1
+    if not e.demo then -- made-up customers (/sc demo) stay put
+      local r = Roster.members[name]
+      if e.status == "INVITED" then
+        if r then
+          e.status = "GROUP"; changed = true
+        elseif now - (e.added or now) > INVITE_TIMEOUT then
+          S.queue[name] = nil; changed = true -- declined / ignored the invite
         end
-        e.status, e.caster, e.castAt = "GROUP", nil, nil; changed = true
+      elseif not r then
+        if e.status == "ARRIVED" and e.caster then
+          leavers[#leavers + 1] = { name = name, caster = e.caster }
+        else
+          S.queue[name] = nil; changed = true
+        end
+      elseif e.status == "SUMMONING" then
+        if r.zone and r.zone == myZone then
+          e.status, e.arrivedAt = "ARRIVED", now; changed = true
+        elseif now - (e.castAt or now) > ns.db.summonTimeout then
+          if e.caster then
+            local L = ns.Ledger.Get(e.caster)
+            L.failed = L.failed + 1
+          end
+          e.status, e.caster, e.castAt = "GROUP", nil, nil; changed = true
+        end
       end
     end
   end

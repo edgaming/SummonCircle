@@ -1,6 +1,7 @@
 -- Summon Circle: /sc demo. Made-up data for trying the UI alone.
--- Nothing here is sent to anyone: fake circles and applicants live only in
--- your own window, and clicking their buttons doesn't whisper or invite.
+-- Nothing here is sent to anyone: fake circles, applicants, customers and
+-- requests live only in your own window, and clicking their buttons doesn't
+-- whisper, invite, trade or kick anyone.
 local ADDON, ns = ...
 local Demo = ns:Module("Demo")
 
@@ -19,6 +20,57 @@ local APPLICANTS = {
   { name = "Rook Vale", zone = "Orgrimmar", shards = 14 },
   { name = "Nyx Thorn", zone = "Stranglethorn Vale", shards = 31 },
 }
+
+-- One customer at every stage, so every row style shows.
+local function queueEntries(me, now)
+  return {
+    { name = "Bob Smith", status = "PAID", caster = me, castAt = now - 300, arrivedAt = now - 200, paid = 3000, added = now - 600 },
+    { name = "Cara Jones", status = "ARRIVED", caster = me, castAt = now - 90, arrivedAt = now - 40, added = now - 500 },
+    { name = "Finn Moss", status = "ARRIVED", caster = "Bram Lock", castAt = now - 400, arrivedAt = now - 260, added = now - 480 },
+    { name = "Hana Reed", status = "SUMMONING", caster = "Bram Lock", castAt = now - 20, added = now - 300 },
+    { name = "Ivy Lane", status = "GROUP", added = now - 200 },
+    { name = "Jon Pike", status = "GROUP", added = now - 120 },
+    { name = "Kai Fern", status = "INVITED", added = now - 30 },
+  }
+end
+
+-- Requests: a plain one, one with an offer and a long message, one another
+-- summoner already whispered.
+local function requestEntries(now)
+  return {
+    { from = "Gorak Stone", text = "WTB UC summon", at = now - 12 },
+    { from = "Lia Moon", text = "LF port to undercity 20s, anyone around? been waiting a while here in the barrens",
+      offer = 2000, at = now - 95 },
+    { from = "Mog Tusk", text = "need summ uc pls", at = now - 150, claimedBy = "Bram Lock", claimedAt = now },
+  }
+end
+
+function Demo.Queue()
+  local me, now = ns.Me(), GetServerTime()
+  for _, e in ipairs(queueEntries(me, now)) do
+    e.demo = true
+    ns.S.queue[e.name] = e
+  end
+  ns.UI.ShowView("queue")
+  ns.Print("Added 7 made-up customers, one at every stage. Clear them with /sc demo clear.")
+end
+
+function Demo.Requests()
+  local now = GetServerTime()
+  for _, l in ipairs(requestEntries(now)) do
+    l.channel, l.city, l.demo = "Trade - City", "undercity", true
+    ns.Leads.list[l.from] = l
+  end
+  ns.Update()
+  ns.Print("Added 3 made-up requests (see the Requests label). Clear them with /sc demo clear.")
+end
+
+function Demo.All()
+  Demo.Circles()
+  Demo.Applicants()
+  Demo.Queue()
+  Demo.Requests()
+end
 
 function Demo.Tabs()
   ns.UI.forceTabs = true
@@ -61,6 +113,12 @@ function Demo.Clear()
   for name, a in pairs(ns.S.applicants or {}) do
     if a.demo then ns.S.applicants[name] = nil end
   end
+  for name, e in pairs(ns.S.queue) do
+    if e.demo then ns.S.queue[name] = nil end
+  end
+  for name, l in pairs(ns.Leads.list) do
+    if l.demo then ns.Leads.list[name] = nil end
+  end
   ns.UI.forceTabs = false
   ns.Update()
   ns.Print("Demo data cleared.")
@@ -71,11 +129,17 @@ function Demo.Command(rest)
   if sub == "tabs" then Demo.Tabs()
   elseif sub == "circles" then Demo.Circles()
   elseif sub == "applicants" then Demo.Applicants()
+  elseif sub == "queue" then Demo.Queue()
+  elseif sub == "requests" then Demo.Requests()
+  elseif sub == "all" then Demo.All()
   elseif sub == "clear" then Demo.Clear()
   else
     ns.Print("/sc demo tabs - show the tabs on any class")
     ns.Print("/sc demo circles - 3 made-up circles in Find a Circle")
     ns.Print("/sc demo applicants - 2 made-up applicants under Summoners (leader)")
+    ns.Print("/sc demo queue - 7 made-up customers, one at every stage")
+    ns.Print("/sc demo requests - 3 made-up summon requests from chat")
+    ns.Print("/sc demo all - all of the above")
     ns.Print("/sc demo clear - remove all of it")
   end
 end

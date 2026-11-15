@@ -4,12 +4,13 @@
 --   purple  "you are here": the selected tab, the active list, a picked row
 --   gold    "look at this, something's new": a pulsing glow, a yellow label
 --           (gold headings and button text are just WoW's own look)
---   band    hover, everywhere: a faint flat light band
+--   hover   one highlight everywhere: the game's own list-row highlight
+--           (the quest log's), a soft fading glow
 --   status  green good, yellow attention, orange low, red problem, grey off
 --
--- Buttons: red WoW buttons only for a screen's main action; actions on a
--- row are light text buttons. Icon buttons (the gears) keep the game's
--- own icon highlight.
+-- Buttons: WoW's own buttons for actions (small ones on rows), except
+-- Whisper and x on chat requests, which are light text buttons. Icon
+-- buttons (the gears) keep the game's own icon highlight.
 --
 -- Widgets get their colours and treatments from here, never their own
 -- numbers, so a new screen can't drift without changing the guide.
@@ -26,20 +27,17 @@ Style.hex = {
 -- Selected: the accent line/edge, and the band behind a picked row.
 Style.ACCENT = { 0.69, 0.44, 1, 1 }
 Style.SELECTED_BAND = { 0.30, 0.14, 0.42, 0.45 }
--- Hover: a faint flat band.
-Style.HOVER = { 1, 1, 1, 0.07 }
+-- Hover: the game's own list-row highlight (quest log).
+Style.HOVER_TEXTURE = "Interface\\QuestFrame\\UI-QuestTitleHighlight"
 -- New: gold.
 Style.NEW = { 1, 0.82, 0 }
 
 local GLOW = "Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64"
 
--- Hover band on a button (shown by the game while the mouse is over it).
+-- Hover highlight on a button (the game shows it while the mouse is over it).
 function Style.Hover(button)
-  local band = button:CreateTexture(nil, "BACKGROUND")
-  band:SetAllPoints()
-  band:SetColorTexture(unpack(Style.HOVER))
-  button:SetHighlightTexture(band)
-  return band
+  button:SetHighlightTexture(Style.HOVER_TEXTURE, "ADD")
+  return button:GetHighlightTexture()
 end
 
 -- Selected: a band behind the whole frame (hidden until selected).

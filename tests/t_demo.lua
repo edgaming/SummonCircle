@@ -43,3 +43,36 @@ eq("demo clear: circles gone", #ns.Listings.Recruiting(), 0)
 eq("demo clear: applicants gone", #ns.Recruit.Applicants(), 0)
 check("demo clear: tabs off again", not UI.HasTabs())
 eq("nothing went over the network", #ADDON_MSGS, 0)
+
+-- Queue and requests demo.
+ME_NAME = "Dana Mage"
+SENT, ADDON_MSGS = {}, {}
+SlashCmdList.SUMMONCIRCLE("demo queue")
+local n = 0
+for _ in pairs(ns.S.queue) do n = n + 1 end
+eq("demo queue: seven customers", n, 7)
+RunTimers(2)
+n = 0
+for _ in pairs(ns.S.queue) do n = n + 1 end
+eq("demo queue: housekeeping leaves them alone", n, 7)
+ns.Queue.Kick("Bob Smith")
+check("demo queue: Kick just removes them", ns.S.queue["Bob Smith"] == nil)
+eq("demo queue: no whisper, no uninvite", #SENT, 0)
+
+SlashCmdList.SUMMONCIRCLE("demo requests")
+eq("demo requests: three", #ns.Leads.Sorted(), 3)
+RunTimers(2)
+eq("demo requests: kept while the shop is closed", #ns.Leads.Sorted(), 3)
+ns.Leads.Whisper("Gorak Stone")
+check("demo requests: Whisper removes it", ns.Leads.list["Gorak Stone"] == nil)
+eq("demo requests: nothing sent", #SENT + #ADDON_MSGS, 0)
+UI.ShowView("requests")
+check("demo requests: rows show", SummonCircleFrame.content:IsShown())
+
+SlashCmdList.SUMMONCIRCLE("demo clear")
+n = 0
+for _ in pairs(ns.S.queue) do n = n + 1 end
+eq("demo clear: customers gone", n, 0)
+eq("demo clear: requests gone", #ns.Leads.Sorted(), 0)
+SlashCmdList.SUMMONCIRCLE("demo all")
+check("demo all: everything at once", #ns.Leads.Sorted() == 3 and #ns.Listings.Recruiting() == 3)

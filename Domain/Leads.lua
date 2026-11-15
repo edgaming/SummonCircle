@@ -122,12 +122,21 @@ end
 function Leads.Whisper(name)
   local lead = Leads.list[name]
   if not lead or lead.claimedBy then return end
+  if lead.demo then -- made-up request (/sc demo): nothing is sent
+    Leads.list[name] = nil
+    return ns.Update()
+  end
   ns.Whisper(Leads.WhisperText(lead), name)
   claim(name, "whisper")
 end
 
 function Leads.Dismiss(name)
-  if not Leads.list[name] then return end
+  local lead = Leads.list[name]
+  if not lead then return end
+  if lead.demo then
+    Leads.list[name] = nil
+    return ns.Update()
+  end
   claim(name, "dismiss")
 end
 
@@ -153,7 +162,9 @@ function Leads.Prune(now)
   local on = Leads.Enabled()
   for name, l in pairs(Leads.list) do
     local gone
-    if not on then
+    if l.demo then
+      gone = now - l.at >= 600 -- made-up requests (/sc demo) last 10 minutes
+    elseif not on then
       gone = true
     elseif l.claimedBy then
       gone = now - (l.claimedAt or now) >= Leads.SHOW_CLAIM
