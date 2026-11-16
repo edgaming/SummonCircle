@@ -62,6 +62,18 @@ def main(check):
     check("pick: the row is highlighted", vex.eval(row + ".sel:IsShown()"))
     check("pick: Ask to join is on", vex.eval(pg + ".ask:IsEnabled()") and vex.eval(pg + ".ask:GetText()") == "Ask to join")
     check("leader: the box shows 2/3", "(2/3)" in ash.eval("SummonCircleFrame.recruit.hint:GetText()"))
+    ash.ns.UI.ShowPage("find")
+    own = "SummonCircle.UI.pages[1].frame.rows[1]"
+    check("own circle: shown first in Find a Circle", ash.eval(own + ":IsShown()")
+          and "Ash Lock" in ash.eval(own + ".name:GetText()") and "(your circle)" in ash.eval(own + ".name:GetText()"))
+    check("own circle: greyed out", ash.eval(own + ":GetAlpha()") < 1)
+    ash.eval(own + ":GetScript('OnClick')()")
+    check("own circle: can't be picked", ash.eval("SummonCircle.UI.pages[1].selected") is None
+          and not ash.eval("SummonCircle.UI.pages[1].frame.ask:IsEnabled()"))
+    bram.ns.UI.ShowPage("find")
+    check("own circle: the other summoners see it too",
+          "(your circle)" in bram.eval("SummonCircle.UI.pages[1].frame.rows[1].name:GetText()"))
+    ash.ns.UI.ShowPage("circle"); bram.ns.UI.ShowPage("circle")
     check("leader only: Bram has no box", not bram.eval("SummonCircleFrame.recruit:IsShown()"))
 
     # --- Asking to join -------------------------------------------------------------

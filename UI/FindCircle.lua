@@ -68,7 +68,7 @@ local function buildRow(i)
     r.slots[k] = t
   end
   r.left = Wd.Text(r, "GameFontHighlightSmall", "RIGHT"); r.left:SetPoint("TOPRIGHT", -6, -33)
-  r:SetScript("OnClick", function() page.Select(r.leader) end)
+  r:SetScript("OnClick", function() if r.own ~= true then page.Select(r.leader) end end)
   r:SetScript("OnEnter", showTooltip)
   r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
   r:Hide()
@@ -119,9 +119,14 @@ local function note(count)
   return "No circles are looking for summoners right now."
 end
 
-local function refreshRow(r, l)
-  r.listing, r.leader = l, l.leader
-  r.name:SetText(ns.Short(l.leader))
+-- own = your own circle: shown greyed out so you can see how it looks to
+-- others, but it can't be picked.
+local function refreshRow(r, l, own)
+  r.listing, r.leader, r.own = l, l.leader, own == true
+  r:SetAlpha(own and 0.5 or 1)
+  local hl = r:GetHighlightTexture()
+  if hl then hl:SetAlpha(own and 0 or 1) end
+  r.name:SetText(own and (ns.Short(l.leader) .. c(GREY, "  (your circle)")) or ns.Short(l.leader))
   r.spot:SetText(l.spot)
   local q = l.queue or 0
   r.detail:SetText(ns.Coins(l.price) .. c(GREY, "  ·  " .. (q == 0 and "nobody waiting" or (q .. " waiting"))))
@@ -134,8 +139,8 @@ local function refreshRow(r, l)
   end
   local left = ns.Listings.SummonsLeft(l)
   r.left:SetText(c(shardColor(left), ("%d summons left"):format(left)))
-  r.sel:SetShown(l.leader == page.selected)
-  r.edge:SetShown(l.leader == page.selected)
+  r.sel:SetShown(not own and l.leader == page.selected)
+  r.edge:SetShown(not own and l.leader == page.selected)
   r:Show()
 end
 
@@ -154,20 +159,26 @@ end
 
 function page.Refresh()
   local list = ns.Recruit.InACircle() and {} or ns.Listings.Recruiting()
-  local msg = note(#list)
+  local mine = ns.Listings.MineRecruiting()
+  local msg = note(#list + (mine and 1 or 0))
+  if mine and ns.Recruit.InACircle() then msg = nil end -- your own circle explains itself
   p.note:SetText(msg or "")
   p.note:SetShown(msg ~= nil)
   p.count:SetText(#list > 0 and ("%d circle%s"):format(#list, #list == 1 and "" or "s") or "")
   -- A note pushes the rows down a little.
   local shift = msg and 22 or 0
+  -- Your own circle first (greyed), then everyone else's.
+  local rows = {}
+  if mine then rows[1] = { l = mine, own = true } end
+  for _, l in ipairs(list) do rows[#rows + 1] = { l = l } end
   for i, r in ipairs(p.rows) do
     r:ClearAllPoints()
     r:SetPoint("TOPLEFT", 12, Y_TOP - shift - (i - 1) * ROW_H)
-    local l = list[i]
-    if l and (i < ROWS or not msg) then refreshRow(r, l) else r:Hide() end
+    local row = rows[i]
+    if row and (i < ROWS or not msg) then refreshRow(r, row.l, row.own) else r:Hide() end
   end
   local shown = msg and (ROWS - 1) or ROWS
-  p.more:SetText(#list > shown and ("+%d more"):format(#list - shown) or "")
+  p.more:SetText(#rows > shown and ("+%d more"):format(#rows - shown) or "")
   refreshAsk(list)
 end
 

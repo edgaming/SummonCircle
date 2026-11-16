@@ -161,6 +161,20 @@ function Listings.Open()
   return out
 end
 
+-- Your own circle's listing while it's recruiting (what others see), or nil.
+-- The leader builds it; other summoners use the one heard from the leader.
+function Listings.MineRecruiting()
+  if not ns.S or not ns.S.recruiting then return nil end
+  if Roster.IsLeader() then
+    local l = Listings.Build()
+    l.at = GetServerTime()
+    return l
+  end
+  for leader, l in pairs(Listings.all) do
+    if Roster.members[leader] and l.recruiting then return l end
+  end
+end
+
 -- Circles looking for summoners, for Find a Circle: closest to full first,
 -- then newest. Never your own circle or one you're grouped with.
 function Listings.Recruiting()
