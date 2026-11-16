@@ -52,7 +52,7 @@ Type `/sc` to open the window.
 Read the purple box and press the big button under it.
 
 ## Commands
-`/sc` (or `/summoncircle`) toggles the window. `/sc help` lists the rest: whisper triggers, the thanks message, a sound for new requests (`/sc sound on`), blacklist management (`/sc bl add First Last [reason]`, `/sc bl del First Last`, `/sc bl list`), earnings reset and lifetime stats. `/sc net` says whether the network is working.
+`/sc` (or `/summoncircle`) toggles the window. `/sc help` lists the rest: whisper triggers, the thanks message, a sound for new requests (`/sc sound on`), blacklist management (`/sc bl add First Last [reason]`, `/sc bl del First Last`, `/sc bl list`), earnings reset and lifetime stats. `/sc net` says whether the network is working. `/sc minimap` hides or shows the minimap button. The window also opens from the minimap button or the game's addon menu on the minimap.
 
 ## Known limitations
 - Customers inside a dungeon or battleground aren't flagged yet. A summon to them just times out and they go back into the queue.

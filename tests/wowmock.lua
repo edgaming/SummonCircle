@@ -276,3 +276,11 @@ TOOLTIP = {}
 function GameTooltip:SetOwner() TOOLTIP = {} end
 function GameTooltip:AddLine(text) TOOLTIP[#TOOLTIP + 1] = tostring(text) end
 function GameTooltip:AddDoubleLine(a, b) TOOLTIP[#TOOLTIP + 1] = tostring(a) .. " | " .. tostring(b) end
+
+-- Minimap and cursor, for the minimap button.
+Minimap = CreateFrame("Frame")
+function Minimap:GetWidth() return 140 end
+function Minimap:GetCenter() return 1000, 600 end
+function Minimap:GetEffectiveScale() return 1 end
+CURSOR = { 1000, 700 }
+function GetCursorPosition() return CURSOR[1], CURSOR[2] end

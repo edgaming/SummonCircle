@@ -11,6 +11,7 @@ local HELP = {
   "/sc stats - lifetime earnings",
   "/sc net - is the network working?",
   "/sc demo - made-up circles and applicants to try the window alone",
+  "/sc minimap - hide or show the minimap button",
 }
 
 local commands = {}
@@ -77,6 +78,12 @@ end
 function commands.net() ns.Print(ns.Net.Describe()) end
 
 function commands.demo(rest) ns.Demo.Command(rest) end
+
+function commands.minimap()
+  local show = ns.db.minimap and ns.db.minimap.hide
+  ns.Minimap.SetShown(show and true or false)
+  ns.Print(show and "Minimap button shown." or "Minimap button hidden. /sc minimap brings it back.")
+end
 
 function commands.reset()
   ns.Sync.Do("RESET", {})

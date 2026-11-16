@@ -5,6 +5,9 @@
 ## Version: @project-version@
 ## SavedVariables: SummonCircleDB
 ## IconTexture: Interface\AddOns\SummonCircle\Media\icon
+## AddonCompartmentFunc: SummonCircle_OnCompartmentClick
+## AddonCompartmentFuncOnEnter: SummonCircle_OnCompartmentEnter
+## AddonCompartmentFuncOnLeave: SummonCircle_OnCompartmentLeave
 
 Core\Core.lua
 Core\Util.lua
@@ -35,4 +38,5 @@ UI\SummonerPanel.lua
 UI\AdPanel.lua
 UI\FindCircle.lua
 UI\FindSummon.lua
+UI\MinimapButton.lua
 Commands.lua
