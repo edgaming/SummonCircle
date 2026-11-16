@@ -88,6 +88,7 @@ function page.Build(parent, height)
   for i = 1, ROWS do p.rows[i] = buildRow(i) end
   p.more = Wd.Text(p, "GameFontDisableSmall")
   p.more:SetPoint("TOPLEFT", 16, Y_TOP - ROWS * ROW_H - 2)
+  p.alone = Wd.Text(p, "GameFontDisable")
   -- The one action, for the picked row.
   p.ask = Wd.Button(p, "Ask to join", 150, 24)
   p.ask:SetPoint("BOTTOMRIGHT", -14, 12)
@@ -179,6 +180,12 @@ function page.Refresh()
   end
   local shown = msg and (ROWS - 1) or ROWS
   p.more:SetText(#rows > shown and ("+%d more"):format(#rows - shown) or "")
+  -- Only your own circle listed: say so under it, so the page isn't just empty.
+  p.alone:ClearAllPoints()
+  p.alone:SetPoint("TOPLEFT", 16, Y_TOP - shift - ROW_H - 6)
+  local alone = mine and #list == 0 and not ns.Recruit.InACircle() and ns.Net.Available()
+  p.alone:SetText(alone and (ns.Listings.Waiting() and "Waiting up to a minute for other circles..."
+    or "No other circles are looking for summoners right now.") or "")
   refreshAsk(list)
 end
 
