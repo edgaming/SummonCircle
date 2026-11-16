@@ -21,3 +21,11 @@ SlashCmdList.SUMMONCIRCLE("minimap")
 check("/sc minimap hides it", not b:IsShown() and ns.db.minimap.hide)
 SlashCmdList.SUMMONCIRCLE("minimap")
 check("/sc minimap shows it again", b:IsShown() and not ns.db.minimap.hide)
+
+-- "Looking for summoners" hint while the network starts vs when it failed.
+ns.UI.ShowPage("circle")
+ns.Update()
+check("recruit hint: loading while the network starts", SummonCircleFrame.recruit.hint:GetText():find("loading network") ~= nil)
+ns.Net.status = "failed"
+ns.Update()
+check("recruit hint: network off when it failed", SummonCircleFrame.recruit.hint:GetText():find("network off") ~= nil)

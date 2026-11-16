@@ -482,7 +482,12 @@ local function refreshRecruit(leader, list)
   if not show then return end
   f.recruit:SetChecked(ns.Recruit.IsRecruiting())
   local count = ("(%d/%d)"):format(#list, ns.Listings.WANTED)
-  f.recruit.hint:SetText(ns.Net.Available() and c(GREY, count) or c(GREY, count .. " network off"))
+  local net = ""
+  if not ns.Net.Available() then
+    -- Starting up (about 10 s after login) vs really unavailable.
+    net = ns.Net.status == "failed" and "  network off" or "  loading network..."
+  end
+  f.recruit.hint:SetText(c(GREY, count .. net))
 end
 
 local function refreshSummoners(list, me)
