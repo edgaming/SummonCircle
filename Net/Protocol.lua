@@ -12,10 +12,25 @@ Protocol.CHUNK = 220 -- payload bytes per frame (addon messages max out at 255)
 
 local function codec() return C_EncodingUtil end
 
+-- Midnight can hand us "secret" values that may not be sent anywhere.
+-- A copy of the message without them, so one hidden value can never stop
+-- a message (it simply arrives without that field).
+local function scrub(v, depth)
+  if ns.IsSecret(v) then return nil end
+  if type(v) ~= "table" then return v end
+  if depth > 20 then return nil end
+  local out = {}
+  for k, x in pairs(v) do
+    if not ns.IsSecret(k) then out[k] = scrub(x, depth + 1) end
+  end
+  return out
+end
+Protocol.Scrub = function(v) return scrub(v, 0) end
+
 function Protocol.Encode(msg)
   msg.v = msg.v or Protocol.VERSION
   local E = codec()
-  return E.EncodeBase64(E.CompressString(E.SerializeCBOR(msg)))
+  return E.EncodeBase64(E.CompressString(E.SerializeCBOR(scrub(msg, 0))))
 end
 
 -- Returns the message table, or nil for anything malformed.

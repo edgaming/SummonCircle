@@ -18,7 +18,9 @@ function Roster.MapOf(unit)
   local ok, id = pcall(C_Map.GetBestMapForUnit, unit)
   if not ok or type(id) ~= "number" or ns.IsSecret(id) then return nil end
   local info = C_Map.GetMapInfo and C_Map.GetMapInfo(id)
-  return id, info and info.name or nil
+  local name = info and info.name
+  if ns.IsSecret(name) then name = nil end
+  return id, name
 end
 
 function Roster.Scan()
@@ -27,6 +29,8 @@ function Roster.Scan()
   if IsInRaid() then
     for i = 1, GetNumGroupMembers() do
       local name, rank, _, _, _, class, zone, online = GetRaidRosterInfo(i)
+      if ns.IsSecret(zone) then zone = nil end
+      if ns.IsSecret(class) then class = nil end
       local key = ns.UnitKey("raid" .. i) or (name and ns.Full(name))
       if key then
         local map = Roster.MapOf("raid" .. i)
@@ -56,7 +60,7 @@ function Roster.IsHere(r)
   if not r then return false end
   local myMap = Roster.MapOf("player")
   if r.map and myMap and r.map == myMap then return true end
-  local zone = GetRealZoneText()
+  local zone = ns.ZoneText()
   return r.zone ~= nil and zone ~= nil and r.zone == zone
 end
 
@@ -90,7 +94,7 @@ end
 -- Sent to the whole group: it reveals nothing about the circle.
 ---------------------------------------------------------------------------
 local function presence(t)
-  return { t = t, shards = ns.GetShards(), afk = UnitIsAFK("player") }
+  return { t = t, shards = ns.GetShards(), afk = ns.IsAFK("player") }
 end
 
 function Roster.SendHello()

@@ -31,7 +31,7 @@ end
 
 -- The entry for a zone name as the game reports it (e.g. "Undercity").
 function Locations.ByZone(zone)
-  if not zone then return nil end
+  if not zone or ns.IsSecret(zone) then return nil end
   local z = zone:lower()
   for _, e in ipairs(ordered) do
     if e.name:lower() == z then return e end
@@ -40,7 +40,7 @@ end
 
 -- The city you're standing in, or nil.
 function Locations.Current()
-  return Locations.ByZone(GetRealZoneText and GetRealZoneText() or nil)
+  return Locations.ByZone(ns.ZoneText())
 end
 
 -- Locations a faction can use (its own capitals plus neutral ones).

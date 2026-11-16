@@ -144,7 +144,10 @@ function GetRaidRosterInfo(i)
   local class = m.class or "WARLOCK"
   return m.name, m.leader and 2 or (m.assist and 1 or 0), 1, 60, class, class, m.zone or "Undercity", true
 end
-AFK = false -- is this player AFK?
+-- Secret values (Midnight): SECRET stands in for one; nothing may read it.
+SECRET = setmetatable({}, { __tostring = function() return "<secret>" end })
+function issecretvalue(v) return v == SECRET end
+AFK = false -- is this player AFK? (set to SECRET to hide it)
 function UnitIsAFK(unit) return unit == "player" and AFK or false end
 function UnitPower() return 0 end
 function GetNormalizedRealmName() return "CAMWOWUS2Realm8PvP" end
@@ -213,6 +216,7 @@ C_PartyInfo = { InviteUnit = function(n) SENT[#SENT+1] = { kind = "INVITE", targ
 -- "CBOR" here is a Lua literal, so messages survive the trip between
 -- separate players (separate Lua runtimes) in the multi-player tests.
 local function ser(v)
+  if issecretvalue and issecretvalue(v) then error("attempted to serialize a secret value") end
   local t = type(v)
   if t == "string" then return ("%q"):format(v) end
   if t == "number" or t == "boolean" or t == "nil" then return tostring(v) end

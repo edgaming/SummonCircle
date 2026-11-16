@@ -57,12 +57,31 @@ function ns.IsSummonSpell(id)
   return ns.API.SpellName(id) == ns.SummonName()
 end
 
+-- The zone you're in, or nil if the game hides it (a secret value).
+function ns.ZoneText()
+  local z = GetRealZoneText and GetRealZoneText()
+  if z == nil or ns.IsSecret(z) or z == "" then return nil end
+  return z
+end
+
+-- AFK status. The game can hide it (a secret value): then we say "not AFK"
+-- rather than guess, since a secret can't be tested or sent.
+function ns.IsAFK(unit)
+  local v = UnitIsAFK(unit or "player")
+  if ns.IsSecret(v) then return false end
+  return v and true or false
+end
+
+-- Soul shards. If the game hides the count, keep the last one we saw.
+local lastShards = 0
 function ns.GetShards()
-  local n = ns.API.ItemCount(ns.SHARD_ITEM) or 0
+  local n = ns.API.ItemCount(ns.SHARD_ITEM)
+  if ns.IsSecret(n) or type(n) ~= "number" then return lastShards end
   if n == 0 and Enum.PowerType and Enum.PowerType.SoulShards then
     local ok, p = pcall(UnitPower, "player", Enum.PowerType.SoulShards)
     if ok and type(p) == "number" and not ns.IsSecret(p) and p > 0 then n = p end
   end
+  lastShards = n
   return n
 end
 

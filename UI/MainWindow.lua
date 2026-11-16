@@ -614,7 +614,7 @@ function UI.Refresh()
   local me, now = ns.Me(), GetServerTime()
   local leader, active = ns.Roster.IsLeader(), ns.Session.IsActive()
 
-  f.title:SetText("Summon Circle  " .. c(GREY, GetRealZoneText() or ""))
+  f.title:SetText("Summon Circle  " .. c(GREY, ns.ZoneText() or ""))
   if not refreshPages() then return end
   f.priceText:SetText(c(GREY, "Price ") .. ns.Coins(ns.S.price))
   refreshStatus(active, leader)

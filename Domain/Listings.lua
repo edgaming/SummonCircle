@@ -28,8 +28,8 @@ Listings.readyAt = nil  -- GetTime() when the network came up
 function Listings.Spot()
   local loc = ns.Locations.Current()
   if loc then return loc.name, loc.short end
-  local zone = GetRealZoneText()
-  if zone and zone ~= "" and not ns.IsSecret(zone) then return zone, nil end
+  local zone = ns.ZoneText()
+  if zone then return zone, nil end
   return "?", nil
 end
 
@@ -47,7 +47,7 @@ function Listings.Build()
   -- Contacts: who a customer should whisper. Summoners who can invite and
   -- aren't AFK; the leader first, unless the leader is AFK.
   local shards, contacts = {}, {}
-  if not UnitIsAFK("player") then contacts[1] = me end
+  if not ns.IsAFK("player") then contacts[1] = me end
   for _, n in ipairs(list) do
     shards[#shards + 1] = { n = n, s = ns.Rotation.ShardsOf(n) }
     if n ~= me then

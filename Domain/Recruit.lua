@@ -151,7 +151,7 @@ function Recruit.Ask(leader)
     Recruit.asked[leader] = GetTime()
     return ns.Update()
   end
-  local zone, shards = GetRealZoneText() or "?", ns.GetShards()
+  local zone, shards = ns.ZoneText() or "?", ns.GetShards()
   ns.Whisper(("Hi, I'm looking to join your summoning circle in %s. I'm in %s with %d soul shards.")
     :format(l.spot, zone, shards), leader)
   Transport.SendDirect({ t = "JOIN_REQ", zone = zone, shards = shards, spot = l.spot }, leader)

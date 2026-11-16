@@ -58,7 +58,7 @@ end
 function Advertise.Text()
   local waiting = #ns.Queue.Waiting()
   local text = ns.db.adText
-    :gsub("{city}", GetRealZoneText() or "")
+    :gsub("{city}", ns.ZoneText() or "")
     :gsub("{price}", ns.Money(ns.S.price))
     :gsub("{queue}", waiting > 0 and (waiting .. " in queue") or "no wait!")
   return text

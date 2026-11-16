@@ -18,7 +18,7 @@ end
 function Rotation.SkipReason(name)
   local shards, afk
   if name == ns.Me() then
-    shards, afk = ns.GetShards(), UnitIsAFK("player")
+    shards, afk = ns.GetShards(), ns.IsAFK("player")
   else
     local p = Roster.peers[name]
     if not p or (GetTime() - p.seen) >= STALE then return "needs the addon" end
